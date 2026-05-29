@@ -1,0 +1,8 @@
+import { Button, Card, Form, Input, Space, message } from 'antd';
+import { useState } from 'react';
+import { DataTable } from '../../components/common/DataTable';
+import { FormDrawer } from '../../components/common/FormDrawer';
+import { PageHeader } from '../../components/common/PageHeader';
+import { useCreateRole, useRoles } from '../../hooks/useRoles';
+import { useTrainingMappings } from '../../hooks/useTrainingMappings';
+export function RolesPage(){ const {data,isLoading}=useRoles(); const {data:mappings}=useTrainingMappings(); const create=useCreateRole(); const [open,setOpen]=useState(false); return <><PageHeader title="Role Management" subtitle="Roles drive mapped courses and learner assignments." actions={<Button type="primary" onClick={()=>setOpen(true)}>Create role</Button>}/><DataTable loading={isLoading} dataSource={data} expandable={{expandedRowRender:r=><Card size="small">Mapped courses: {mappings?.filter(m=>m.role_id===r.role_id).length??0}</Card>}} columns={[{title:'Role',dataIndex:'role_name'},{title:'Type',dataIndex:'role_type'},{title:'Description',dataIndex:'description'}]}/><FormDrawer title="Create role" open={open} onClose={()=>setOpen(false)}><Form layout="vertical" onFinish={(v)=>create.mutate(v,{onSuccess:()=>{message.success('Role created'); setOpen(false)}})}><Form.Item name="role_name" label="Role name" rules={[{required:true}]}><Input/></Form.Item><Form.Item name="role_type" label="Role type" rules={[{required:true}]}><Input/></Form.Item><Form.Item name="description" label="Description"><Input.TextArea/></Form.Item><Space><Button type="primary" htmlType="submit">Save</Button><Button onClick={()=>setOpen(false)}>Cancel</Button></Space></Form></FormDrawer></>; }
