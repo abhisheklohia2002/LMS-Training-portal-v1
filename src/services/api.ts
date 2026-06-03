@@ -32,9 +32,70 @@ const DEFAULT_PASSWORD =
 const http: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: { "Content-Type": "application/json" },
+  // headers: { "Content-Type": "application/json" },
 });
+type RetryAxiosRequestConfig = AxiosRequestConfig & {
+  _retry?: boolean;
+};
 
+let refreshPromise: Promise<any> | null = null;
+http.interceptors.request.use((config) => {
+  const isFormData =
+    typeof FormData !== "undefined" && config.data instanceof FormData;
+
+  if (isFormData) {
+    delete config.headers["Content-Type"];
+    delete config.headers["content-type"];
+  }
+
+  return config;
+});
+http.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryAxiosRequestConfig;
+
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const status = error.response?.status;
+    const requestUrl = originalRequest.url || "";
+
+    const isRefreshApi = requestUrl.includes("/api/auth/refresh");
+    const isLoginApi = requestUrl.includes("/api/auth/login");
+    const isLogoutApi = requestUrl.includes("/api/auth/logout");
+
+    if (
+      status !== 401 ||
+      originalRequest._retry ||
+      isRefreshApi ||
+      isLoginApi ||
+      isLogoutApi
+    ) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = http.post("/api/auth/refresh");
+      }
+
+      await refreshPromise;
+
+      return http.request(originalRequest);
+    } catch (refreshError) {
+      localStorage.removeItem("lms_user_id");
+      localStorage.removeItem("lms_role");
+
+      return Promise.reject(refreshError);
+    } finally {
+      refreshPromise = null;
+    }
+  },
+);
 type ApiEnvelope<T> =
   | T
   | { data?: T; user?: T; message?: string; count?: number };
@@ -54,15 +115,32 @@ const isNotFound = (error: unknown) =>
 
 const requestFirst = async <T>(configs: AxiosRequestConfig[]): Promise<T> => {
   let lastError: unknown;
+
   for (const config of configs) {
     try {
-      const response = await http.request<ApiEnvelope<T>>(config);
+      const isFormData =
+        typeof FormData !== "undefined" && config.data instanceof FormData;
+
+      const finalConfig: AxiosRequestConfig = {
+        ...config,
+        headers: {
+          ...(config.headers || {}),
+        },
+      };
+
+      if (isFormData) {
+        delete (finalConfig.headers as any)["Content-Type"];
+        delete (finalConfig.headers as any)["content-type"];
+      }
+
+      const response = await http.request<ApiEnvelope<T>>(finalConfig);
       return unwrap<T>(response);
     } catch (error) {
       lastError = error;
       if (!isNotFound(error)) break;
     }
   }
+
   throw lastError;
 };
 
@@ -328,11 +406,7 @@ export const api = {
     logout: async () => {
       try {
         await http.post("/api/auth/logout");
-      } catch {
-        /* backend logout route is optional */
-      }
-      localStorage.removeItem("lms_user_id");
-      localStorage.removeItem("lms_role");
+      } catch {}
       return true;
     },
   },
@@ -421,6 +495,29 @@ export const api = {
       ),
   },
 
+  uploadModulePdf: async (moduleId: number, file: File, title?: string) => {
+    const formData = new FormData();
+
+    formData.append("module_id", String(moduleId));
+    formData.append("title", title || "");
+    formData.append("file", file);
+
+    return await requestFirst<any>([
+      {
+        method: "POST",
+        url: "/api/module-documents/upload",
+        data: formData,
+      },
+    ]);
+  },
+  getModuleDocuments: async (moduleId: number) => {
+  return await requestFirst<any>([
+    {
+      method: "GET",
+      url: `/api/module-documents/module/${moduleId}`,
+    },
+  ]);
+},
   modules: {
     list: async (courseId?: number) => {
       const raw = await requestFirst<any[]>(
@@ -923,6 +1020,119 @@ export const api = {
       unwrap(await http.delete(`/api/assessment-rules/${id}`)),
   },
 
+  attendance: {
+    summaryByCourse: async (userId: number, courseId: number) =>
+      unwrap(
+        await http.get(
+          `/api/users/${userId}/courses/${courseId}/attendance-summary`,
+        ),
+      ),
+    mark: async (sessionId: number, payload: any) =>
+      unwrap(
+        await http.post(`/api/training-sessions/${sessionId}/attendance`, {
+          ...payload,
+          user_id: Number(payload.user_id),
+          marked_by_user_id:
+            payload.marked_by_user_id !== undefined &&
+            payload.marked_by_user_id !== null
+              ? Number(payload.marked_by_user_id)
+              : undefined,
+        }),
+      ),
+
+    bulkMark: async (sessionId: number, payload: any) =>
+      unwrap(
+        await http.post(`/api/training-sessions/${sessionId}/attendance/bulk`, {
+          attendances: payload.attendances.map((item: any) => ({
+            ...item,
+            user_id: Number(item.user_id),
+            marked_by_user_id:
+              item.marked_by_user_id !== undefined &&
+              item.marked_by_user_id !== null
+                ? Number(item.marked_by_user_id)
+                : undefined,
+          })),
+        }),
+      ),
+
+    bySession: async (sessionId: number) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          {
+            method: "GET",
+            url: `/api/training-sessions/${sessionId}/attendance`,
+          },
+        ]),
+      ),
+
+    byUser: async (userId: number) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          {
+            method: "GET",
+            url: `/api/users/${userId}/attendance`,
+          },
+        ]),
+      ),
+
+    update: async (attendanceId: number, payload: any) =>
+      unwrap(
+        await http.put(`/api/attendance/${attendanceId}`, {
+          ...payload,
+        }),
+      ),
+  },
+  trainingSessions: {
+    list: async (params?: any) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          {
+            method: "GET",
+            url: "/api/training-sessions",
+            params,
+          },
+        ]),
+      ),
+
+    get: async (id: number) =>
+      unwrap(await http.get(`/api/training-sessions/${id}`)),
+
+    create: async (payload: any) =>
+      unwrap(
+        await http.post("/api/training-sessions", {
+          ...payload,
+          course_id: Number(payload.course_id),
+          module_id:
+            payload.module_id !== undefined && payload.module_id !== null
+              ? Number(payload.module_id)
+              : undefined,
+          created_by_user_id: Number(payload.created_by_user_id),
+          is_mandatory: Boolean(payload.is_mandatory),
+        }),
+      ),
+
+    update: async (id: number, payload: any) =>
+      unwrap(
+        await http.put(`/api/training-sessions/${id}`, {
+          ...payload,
+          course_id:
+            payload.course_id !== undefined
+              ? Number(payload.course_id)
+              : undefined,
+          module_id:
+            payload.module_id !== undefined && payload.module_id !== null
+              ? Number(payload.module_id)
+              : undefined,
+          is_mandatory:
+            payload.is_mandatory !== undefined
+              ? Boolean(payload.is_mandatory)
+              : undefined,
+        }),
+      ),
+
+    delete: async (id: number) =>
+      unwrap(await http.delete(`/api/training-sessions/${id}`)),
+  },
   meta: { API_BASE_URL, currentUserRole },
 };
 

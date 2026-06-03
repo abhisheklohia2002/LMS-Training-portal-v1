@@ -30,7 +30,7 @@ export const queryKeys = {
   notifications: ["notifications"] as const,
   reports: ["reports"] as const,
   rules: ["rules"] as const,
-    assignmentRules: ["assignment-rules"] as const,
+  assignmentRules: ["assignment-rules"] as const,
   assessmentRules: ["assessment-rules"] as const,
   certificationRules: ["certification-rules"] as const,
 };
