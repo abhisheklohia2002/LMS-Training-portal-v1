@@ -1,6 +1,7 @@
 import {
   BellOutlined,
   BookOutlined,
+  BuildOutlined,
   DashboardOutlined,
   FileProtectOutlined,
   FileTextOutlined,
@@ -78,21 +79,27 @@ export function MainLayout() {
             icon: <TeamOutlined />,
             label: <Link to="/users">Users</Link>,
           },
-          {
-            key: "/departments",
-            icon: <TeamOutlined />,
-            label: <Link to="/departments">Departments</Link>,
-           
-          },
+         
           {
             key: "/roles",
             icon: <UserOutlined />,
             label: <Link to="/roles">Roles</Link>,
           },
+           {
+            key: "/departments",
+            icon: <BuildOutlined />,
+            label: <Link to="/departments">Departments</Link>,
+           
+          },
           {
             key: "/department-mappings",
             icon: <TeamOutlined />,
             label: <Link to="/department-mappings">Department Mappings</Link>,
+          },
+           {
+            key:"/department-assignments",
+            icon: <FileTextOutlined />,
+            label: <Link to="/department-assignments">Department Assignments</Link>,
           },
           {
             key: "/mappings",
@@ -109,6 +116,7 @@ export function MainLayout() {
             icon: <FileProtectOutlined />,
             label: <Link to="/assessments">Assessments</Link>,
           },
+         
           {
             key: "/certifications",
             icon: <SafetyCertificateOutlined />,

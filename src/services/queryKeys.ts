@@ -36,4 +36,6 @@ export const queryKeys = {
   departmentTrainingMappings: ["department-training-mappings"] as const,
 departmentTrainingMappingsByDepartment: (departmentId: number) =>
   ["department-training-mappings", departmentId] as const,
+trainingAssignments: ["training-assignments"] as const,
+departmentAssignments: ["department-assignments"] as const,
 };

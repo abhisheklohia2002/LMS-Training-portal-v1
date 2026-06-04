@@ -1238,6 +1238,31 @@ export const api = {
       return [];
     },
   },
+  departmentAssignments: {
+    list: async () => {
+    const res = await requestFirst<any>([
+      {
+        method: "GET",
+        url: "/api/training-assignments/department",
+      },
+    ]);
+
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.assignments)) return res.assignments;
+    if (Array.isArray(res?.data)) return res.data;
+
+    return [];
+  },
+  assignCourse: async (payload: any) => {
+    return await requestFirst<any>([
+      {
+        method: "POST",
+        url: "/api/training-assignments/department",
+        data: payload,
+      },
+    ]);
+  },
+},
   meta: { API_BASE_URL, currentUserRole },
 };
 
