@@ -64,14 +64,13 @@ http.interceptors.response.use(
 
     const isRefreshApi = requestUrl.includes("/api/auth/refresh");
     const isLoginApi = requestUrl.includes("/api/auth/login");
-    const isLogoutApi = requestUrl.includes("/api/auth/logout");
+    // const isLogoutApi = requestUrl.includes("/api/auth/logout");
 
     if (
       status !== 401 ||
       originalRequest._retry ||
       isRefreshApi ||
-      isLoginApi ||
-      isLogoutApi
+      isLoginApi 
     ) {
       return Promise.reject(error);
     }
@@ -81,6 +80,8 @@ http.interceptors.response.use(
     try {
       if (!refreshPromise) {
         refreshPromise = http.post("/api/auth/refresh");
+        const self  = http.get("/api/auth/self");
+        await Promise.all([refreshPromise, self]);
       }
 
       await refreshPromise;
