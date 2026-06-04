@@ -21,7 +21,8 @@ import { useCreateModule, useModules } from "../../hooks/useModules";
 import { useAssessments } from "../../hooks/useAssessments";
 import { useCertifications } from "../../hooks/useCertifications";
 import { useUploadModulePdf } from "../../hooks/useuploadfile";
-import ModulePdfCell from "../../components/modulePdfCell/ModulePdfCell";
+import { ModulePdfCell } from "../../components/modulePdfCell/ModulePdfCell";
+
 function CourseDetail({ courseId }: { courseId: number }) {
   const { data: mods } = useModules(courseId);
   const { data: assessments } = useAssessments();
