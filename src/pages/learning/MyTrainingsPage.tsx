@@ -51,6 +51,8 @@ import type {
   TrainingAssignment,
 } from "../../types";
 import { findCourse } from "../../utils/lookup";
+import { AttendanceSummary } from "../../components/attendance/AttendanceSummary";
+import { useAttendanceByUser, useAttendanceSummary } from "../../hooks/useAttendance";
 
 function moduleStatus(progress?: ModuleProgress) {
   if (!progress) return "locked";
@@ -199,6 +201,11 @@ function TrainingCard({
     assignment.course_id,
   );
   const { data: certificateIssues = [] } = useCertificateIssuesByUser(userId);
+  const { data: attendance = [] } = useAttendanceByUser(userId);
+  const { data: attendanceSummary } = useAttendanceSummary(
+  userId,
+  assignment.course_id,
+);
   const complete = useCompleteModule();
   const issueCertificate = useIssueCertificate();
 
@@ -277,6 +284,7 @@ function TrainingCard({
             percent={percent}
             status={percent === 100 ? "success" : "active"}
           />
+          <AttendanceSummary attendances={attendance} />
         </div>
 
         {progress.length === 0 ? (

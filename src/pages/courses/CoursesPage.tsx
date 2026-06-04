@@ -8,8 +8,10 @@ import {
   Space,
   Tabs,
   Tag,
+  Upload,
   message,
 } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { DataTable } from "../../components/common/DataTable";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -18,12 +20,16 @@ import { useCreateCourse, useCourses } from "../../hooks/useCourses";
 import { useCreateModule, useModules } from "../../hooks/useModules";
 import { useAssessments } from "../../hooks/useAssessments";
 import { useCertifications } from "../../hooks/useCertifications";
+import { useUploadModulePdf } from "../../hooks/useuploadfile";
+import ModulePdfCell from "../../components/modulePdfCell/ModulePdfCell";
 function CourseDetail({ courseId }: { courseId: number }) {
   const { data: mods } = useModules(courseId);
   const { data: assessments } = useAssessments();
   const { data: certs } = useCertifications();
   const createModule = useCreateModule();
+  const uploadModulePdf = useUploadModulePdf(courseId);
   const [moduleOpen, setModuleOpen] = useState(false);
+
   return (
     <>
       <Tabs
@@ -47,6 +53,16 @@ function CourseDetail({ courseId }: { courseId: number }) {
                     {
                       title: "Active",
                       render: (_, r) => <StatusTag value={r.is_active} />,
+                    },
+                    {
+                      title: "PDF",
+                      render: (_: any, r: any) => (
+                        <ModulePdfCell
+                          moduleId={r.module_id}
+                          moduleTitle={r.module_title}
+                          courseId={courseId}
+                        />
+                      ),
                     },
                   ]}
                 />

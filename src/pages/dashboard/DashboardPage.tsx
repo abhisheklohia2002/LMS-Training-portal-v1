@@ -32,7 +32,7 @@ export function DashboardPage() {
     <>
       <PageHeader
         title="Dashboard"
-        subtitle="Live mock KPIs powered through TanStack Query hooks."
+        subtitle="...overview of your training program"
       />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <MetricCard
