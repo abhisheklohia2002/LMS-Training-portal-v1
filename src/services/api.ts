@@ -172,7 +172,7 @@ const normalizeUser = (user: any): User => ({
     user?.role_id ?? user?.roleID ?? user?.role?.role_id ?? user?.role?.id ?? 0,
   ),
   department_id: user.department_id ?? null,
-    department: user.department ?? null,
+  department: user.department ?? null,
 });
 
 const normalizeCourse = (course: any): Course => ({
@@ -1195,6 +1195,47 @@ export const api = {
           url: `/api/departments/${departmentId}/training-mappings`,
         },
       ]);
+    },
+  },
+  departmentTrainingMappings: {
+    list: async () => {
+      const res = await requestFirst<any>([
+        {
+          method: "GET",
+          url: "/api/department-training-mappings",
+        },
+      ]);
+
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res?.mappings)) return res.mappings;
+
+      return [];
+    },
+
+    create: async (payload: any) => {
+      return await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/department-training-mappings",
+          data: payload,
+        },
+      ]);
+    },
+
+    getByDepartment: async (departmentId: number) => {
+      const res = await requestFirst<any>([
+        {
+          method: "GET",
+          url: `/api/departments/${departmentId}/training-mappings`,
+        },
+      ]);
+
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res?.mappings)) return res.mappings;
+
+      return [];
     },
   },
   meta: { API_BASE_URL, currentUserRole },

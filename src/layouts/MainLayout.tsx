@@ -90,6 +90,11 @@ export function MainLayout() {
             label: <Link to="/roles">Roles</Link>,
           },
           {
+            key: "/department-mappings",
+            icon: <TeamOutlined />,
+            label: <Link to="/department-mappings">Department Mappings</Link>,
+          },
+          {
             key: "/mappings",
             icon: <FileTextOutlined />,
             label: <Link to="/mappings">Mappings</Link>,
