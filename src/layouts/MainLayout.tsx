@@ -79,6 +79,12 @@ export function MainLayout() {
             label: <Link to="/users">Users</Link>,
           },
           {
+            key: "/departments",
+            icon: <TeamOutlined />,
+            label: <Link to="/departments">Departments</Link>,
+           
+          },
+          {
             key: "/roles",
             icon: <UserOutlined />,
             label: <Link to="/roles">Roles</Link>,
@@ -124,17 +130,18 @@ export function MainLayout() {
   }, [isManagerOrAdmin]);
   const getRole = (roleName: string | undefined) => {
     // if (roleName === undefined) return navigate('/login');?s
-    return roleName
-  }
+    return roleName;
+  };
   return (
-    <Layout>
+    <Layout className="h-screen overflow-hidden">
       <Sider
         breakpoint="lg"
         collapsedWidth={0}
         width={270}
-        className="!bg-slate-950"
+        className="!bg-slate-950 h-screen overflow-y-auto"
       >
         <div className="p-5 text-xl font-bold text-white">LMS Portal</div>
+
         <Menu
           theme="dark"
           mode="inline"
@@ -143,12 +150,14 @@ export function MainLayout() {
           className="!bg-slate-950"
         />
       </Sider>
-      <Layout>
-        <Header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 !bg-white px-5">
+
+      <Layout className="h-screen overflow-hidden">
+        <Header className="flex items-center justify-between border-b border-slate-100 !bg-white px-5">
           <Input.Search
             placeholder="Search courses, users, certificates"
             className="max-w-md"
           />
+
           <div className="flex items-center gap-5">
             <Badge count={unread}>
               <BellOutlined
@@ -156,11 +165,15 @@ export function MainLayout() {
                 onClick={() => navigate("/notifications")}
               />
             </Badge>
+
             <Dropdown
               menu={{
                 items: [
                   { key: "profile", label: me?.user.full_name },
-                  { key: "role", label: `Role: ${getRole(me?.role.role_name)}` },
+                  {
+                    key: "role",
+                    label: `Role: ${getRole(me?.role.role_name)}`,
+                  },
                   { type: "divider" },
                   {
                     key: "logout",
@@ -179,7 +192,8 @@ export function MainLayout() {
             </Dropdown>
           </div>
         </Header>
-        <Content className="p-4 md:p-6">
+
+        <Content className="overflow-y-auto p-4 md:p-6">
           <Breadcrumb
             className="mb-4"
             items={location.pathname
@@ -187,6 +201,7 @@ export function MainLayout() {
               .filter(Boolean)
               .map((x) => ({ title: x }))}
           />
+
           <Outlet />
         </Content>
       </Layout>

@@ -22,6 +22,8 @@ import type {
   TrainingAssignment,
   TrainingMapping,
   User,
+  CreateDepartmentPayload,
+  UpdateDepartmentPayload,
 } from "../types";
 
 const API_BASE_URL =
@@ -70,7 +72,7 @@ http.interceptors.response.use(
       status !== 401 ||
       originalRequest._retry ||
       isRefreshApi ||
-      isLoginApi 
+      isLoginApi
     ) {
       return Promise.reject(error);
     }
@@ -80,7 +82,7 @@ http.interceptors.response.use(
     try {
       if (!refreshPromise) {
         refreshPromise = http.post("/api/auth/refresh");
-        const self  = http.get("/api/auth/self");
+        const self = http.get("/api/auth/self");
         await Promise.all([refreshPromise, self]);
       }
 
@@ -169,6 +171,8 @@ const normalizeUser = (user: any): User => ({
   role_id: Number(
     user?.role_id ?? user?.roleID ?? user?.role?.role_id ?? user?.role?.id ?? 0,
   ),
+  department_id: user.department_id ?? null,
+    department: user.department ?? null,
 });
 
 const normalizeCourse = (course: any): Course => ({
@@ -512,13 +516,13 @@ export const api = {
     ]);
   },
   getModuleDocuments: async (moduleId: number) => {
-  return await requestFirst<any>([
-    {
-      method: "GET",
-      url: `/api/module-documents/module/${moduleId}`,
-    },
-  ]);
-},
+    return await requestFirst<any>([
+      {
+        method: "GET",
+        url: `/api/module-documents/module/${moduleId}`,
+      },
+    ]);
+  },
   modules: {
     list: async (courseId?: number) => {
       const raw = await requestFirst<any[]>(
@@ -1133,6 +1137,65 @@ export const api = {
 
     delete: async (id: number) =>
       unwrap(await http.delete(`/api/training-sessions/${id}`)),
+  },
+  department: {
+    getDepartments: async () => {
+      return await requestFirst<any>([
+        {
+          method: "GET",
+          url: "/api/departments",
+        },
+      ]);
+    },
+    getDepartmentById: async (departmentId: number) => {
+      return await requestFirst<any>([
+        {
+          method: "GET",
+          url: `/api/departments/${departmentId}`,
+        },
+      ]);
+    },
+
+    createDepartment: async (payload: CreateDepartmentPayload) => {
+      return await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/departments",
+          data: payload,
+        },
+      ]);
+    },
+
+    updateDepartment: async (
+      departmentId: number,
+      payload: UpdateDepartmentPayload,
+    ) => {
+      return await requestFirst<any>([
+        {
+          method: "PUT",
+          url: `/api/departments/${departmentId}`,
+          data: payload,
+        },
+      ]);
+    },
+
+    deleteDepartment: async (departmentId: number) => {
+      return await requestFirst<any>([
+        {
+          method: "DELETE",
+          url: `/api/departments/${departmentId}`,
+        },
+      ]);
+    },
+
+    getDepartmentTrainingMappings: async (departmentId: number) => {
+      return await requestFirst<any>([
+        {
+          method: "GET",
+          url: `/api/departments/${departmentId}/training-mappings`,
+        },
+      ]);
+    },
   },
   meta: { API_BASE_URL, currentUserRole },
 };
