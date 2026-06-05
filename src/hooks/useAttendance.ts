@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 
 export type Attendance = {
@@ -28,7 +28,15 @@ export type AttendanceSummary = {
     attendance_status: "present" | "absent" | "late" | "excused" | "pending";
   }[];
 };
-
+export type MarkAttendancePayload = {
+  user_id: number;
+  marked_by_user_id?: number;
+  status: "present" | "absent" | "late" | "excused";
+  check_in_time?: string;
+  check_out_time?: string;
+  attendance_source?: "manual" | "qr" | "geo" | "auto";
+  remarks?: string;
+};
 export function useAttendanceByUser(userId?: number) {
   return useQuery({
     queryKey: ["attendance", "user", userId],
@@ -45,6 +53,29 @@ export function useAttendanceSummary(userId?: number, courseId?: number) {
     enabled: Boolean(userId && courseId),
     queryFn: async () => {
       return api.attendance.summaryByCourse(userId!, courseId!);
+    },
+  });
+}
+export function useMark() {
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      payload,
+    }: {
+      sessionId: number;
+      payload: MarkAttendancePayload;
+    }) => api.attendance.mark(sessionId, payload),
+
+    onSuccess: (_data, variables) => {
+      // queryClient.invalidateQueries({
+      //   queryKey: ["attendance", "user", variables.payload.user_id],
+      // });
+      // queryClient.invalidateQueries({
+      //   queryKey: ["attendance-summary"],
+      // });
+      // queryClient.invalidateQueries({
+      //   queryKey: ["attendance", "session", variables.sessionId],
+      // });
     },
   });
 }

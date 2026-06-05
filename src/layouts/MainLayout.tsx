@@ -1,24 +1,40 @@
 import {
   BellOutlined,
   BookOutlined,
+  BuildOutlined,
   DashboardOutlined,
   FileProtectOutlined,
   FileTextOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   ReadOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Badge, Breadcrumb, Dropdown, Input, Layout, Menu } from "antd";
+import {
+  Avatar,
+  Badge,
+  Breadcrumb,
+  Button,
+  Dropdown,
+  Input,
+  Layout,
+  Menu,
+} from "antd";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { canManageLms } from "../utils/access";
 import { useLogout, useMe } from "../hooks/useAuth";
 import { useNotifications } from "../hooks/useNotifications";
 const { Header, Sider, Content } = Layout;
 export function MainLayout() {
   const location = useLocation();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+  return localStorage.getItem("lms_theme") === "dark";
+});
+  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const logout = useLogout();
   const { data: me } = useMe();
@@ -78,10 +94,28 @@ export function MainLayout() {
             icon: <TeamOutlined />,
             label: <Link to="/users">Users</Link>,
           },
+
           {
             key: "/roles",
             icon: <UserOutlined />,
             label: <Link to="/roles">Roles</Link>,
+          },
+          {
+            key: "/departments",
+            icon: <BuildOutlined />,
+            label: <Link to="/departments">Departments</Link>,
+          },
+          {
+            key: "/department-mappings",
+            icon: <TeamOutlined />,
+            label: <Link to="/department-mappings">Department Mappings</Link>,
+          },
+          {
+            key: "/department-assignments",
+            icon: <FileTextOutlined />,
+            label: (
+              <Link to="/department-assignments">Department Assignments</Link>
+            ),
           },
           {
             key: "/mappings",
@@ -98,6 +132,7 @@ export function MainLayout() {
             icon: <FileProtectOutlined />,
             label: <Link to="/assessments">Assessments</Link>,
           },
+
           {
             key: "/certifications",
             icon: <SafetyCertificateOutlined />,
@@ -124,17 +159,27 @@ export function MainLayout() {
   }, [isManagerOrAdmin]);
   const getRole = (roleName: string | undefined) => {
     // if (roleName === undefined) return navigate('/login');?s
-    return roleName
-  }
+    return roleName;
+  };
+
+  useEffect(() => {
+  localStorage.setItem("lms_theme", isDarkMode ? "dark" : "light");
+
+  document.documentElement.classList.toggle("dark", isDarkMode);
+}, [isDarkMode]);
   return (
-    <Layout>
+    <Layout className="h-screen overflow-hidden">
       <Sider
         breakpoint="lg"
         collapsedWidth={0}
         width={270}
-        className="!bg-slate-950"
+        collapsed={collapsed}
+        onCollapse={(value) => setCollapsed(value)}
+        trigger={null}
+        className="!bg-slate-950 h-screen overflow-y-auto"
       >
         <div className="p-5 text-xl font-bold text-white">LMS Portal</div>
+
         <Menu
           theme="dark"
           mode="inline"
@@ -143,12 +188,20 @@ export function MainLayout() {
           className="!bg-slate-950"
         />
       </Sider>
-      <Layout>
-        <Header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 !bg-white px-5">
+
+      <Layout className="h-screen overflow-hidden">
+        <Header className="flex items-center justify-between border-b border-slate-100 !bg-white px-5">
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            className="mr-3"
+          />
           <Input.Search
             placeholder="Search courses, users, certificates"
             className="max-w-md"
           />
+
           <div className="flex items-center gap-5">
             <Badge count={unread}>
               <BellOutlined
@@ -156,11 +209,15 @@ export function MainLayout() {
                 onClick={() => navigate("/notifications")}
               />
             </Badge>
+
             <Dropdown
               menu={{
                 items: [
                   { key: "profile", label: me?.user.full_name },
-                  { key: "role", label: `Role: ${getRole(me?.role.role_name)}` },
+                  {
+                    key: "role",
+                    label: `Role: ${getRole(me?.role.role_name)}`,
+                  },
                   { type: "divider" },
                   {
                     key: "logout",
@@ -179,7 +236,8 @@ export function MainLayout() {
             </Dropdown>
           </div>
         </Header>
-        <Content className="p-4 md:p-6">
+
+        <Content className="overflow-y-auto p-4 md:p-6">
           <Breadcrumb
             className="mb-4"
             items={location.pathname
@@ -187,6 +245,7 @@ export function MainLayout() {
               .filter(Boolean)
               .map((x) => ({ title: x }))}
           />
+
           <Outlet />
         </Content>
       </Layout>

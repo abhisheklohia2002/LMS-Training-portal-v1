@@ -16,6 +16,9 @@ import { CertificationsPage } from "../pages/certifications/CertificationsPage";
 import { NotificationsPage } from "../pages/notifications/NotificationsPage";
 import { ReportsPage } from "../pages/reports/ReportsPage";
 import { SettingsPage } from "../pages/settings/SettingsPage";
+import { DepartmentsPage } from "../pages/departments/DepartmentsPage";
+import { DepartmentMappingsPanel } from "../pages/mappings-deparments/DepartmentMappingsPanel";
+import { DepartmentAssignmentPanel } from "../pages/assignments-departments/DepartmentAssignmentPanel";
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +44,18 @@ export const router = createBrowserRouter([
           {
             element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
             children: [{ path: "/roles", element: <RolesPage /> }],
+          },
+           {
+            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+            children: [{ path: "/departments", element: <DepartmentsPage /> }],
+          },
+            {
+            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+            children: [{ path: "/department-assignments", element: <DepartmentAssignmentPanel /> }],
+          },
+           {
+            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+            children: [{ path: "/department-mappings", element: <DepartmentMappingsPanel /> }],
           },
           {
             element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
