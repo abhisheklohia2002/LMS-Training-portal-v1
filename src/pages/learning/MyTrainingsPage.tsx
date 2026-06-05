@@ -14,12 +14,15 @@ import {
   Tooltip,
   message,
 } from "antd";
+
 import {
+  BookOutlined,
   DownloadOutlined,
   FileDoneOutlined,
   PlayCircleOutlined,
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
+
 import { useState } from "react";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusTag } from "../../components/common/StatusTag";
@@ -52,7 +55,12 @@ import type {
 } from "../../types";
 import { findCourse } from "../../utils/lookup";
 import { AttendanceSummary } from "../../components/attendance/AttendanceSummary";
-import { useAttendanceByUser, useAttendanceSummary } from "../../hooks/useAttendance";
+import {
+  useAttendanceByUser,
+  useAttendanceSummary,
+  useMark,
+} from "../../hooks/useAttendance";
+import { useModuleDocuments } from "../../hooks/useModuleDocuments";
 
 function moduleStatus(progress?: ModuleProgress) {
   if (!progress) return "locked";
@@ -182,6 +190,189 @@ function QuizModal({
   );
 }
 
+function ModuleLearningItem({
+  progress,
+  module,
+  quizzes,
+  userId,
+  hasPassed,
+  lastAttempt,
+  onStartQuiz,
+  onCompleteModule,
+  completeLoading,
+}: {
+  progress: ModuleProgress;
+  module?: any;
+  quizzes: Assessment[];
+  userId: number;
+  hasPassed: (assessmentId: number) => boolean;
+  lastAttempt: (assessmentId: number) => any;
+  onStartQuiz: (quiz: Assessment) => void;
+  onCompleteModule: (progressId: number) => void;
+  completeLoading: boolean;
+}) {
+  const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
+  const markAttendance = useMark();
+  const documents = Array.isArray(docsRaw)
+    ? docsRaw
+    : docsRaw?.data || docsRaw?.documents || [];
+
+  const pdf = documents?.[0];
+
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [hasReadPdf, setHasReadPdf] = useState(
+    progress.status === "completed" || progress.status === "in_progress",
+  );
+
+  const canStartQuiz = hasReadPdf || !pdf;
+  
+  const handleFinishedReading = () => {
+  const checkIn = new Date();
+  const checkOut = new Date(checkIn.getTime() + 60 * 1000); // +1 minute
+
+  markAttendance.mutate(
+    {
+      sessionId: 1, // temporary; later use actual session id
+      payload: {
+        user_id: userId,
+        marked_by_user_id: userId,
+        status: "present",
+        check_in_time: checkIn.toISOString(),
+        check_out_time: checkOut.toISOString(),
+        attendance_source: "manual",
+        remarks: `Finished reading ${module?.module_title ?? "module PDF"}`,
+      },
+    },
+    {
+      onSuccess: () => {
+        setHasReadPdf(true);
+        setPdfOpen(false);
+        message.success("Reading completed. You can start the test.");
+      },
+      onError: (error) => {
+        message.error(getApiErrorMessage(error));
+      },
+    },
+  );
+};
+  return (
+    <>
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+        <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+          <div>
+            <div className="font-semibold">
+              {module?.module_title ?? `Module ${progress.module_id}`}
+            </div>
+            <div className="text-sm text-slate-500">
+              Module status: {moduleStatus(progress)}
+            </div>
+          </div>
+
+          <Space wrap>
+            {pdf ? (
+              <Button icon={<BookOutlined />} onClick={() => setPdfOpen(true)}>
+                Open PDF
+              </Button>
+            ) : (
+              <Tag color="orange">No PDF uploaded</Tag>
+            )}
+
+            <Button
+              type={progress.status === "completed" ? "default" : "primary"}
+              disabled={progress.status === "completed" || !hasReadPdf}
+              loading={completeLoading}
+              onClick={() => onCompleteModule(progress.id)}
+            >
+              {progress.status === "completed"
+                ? "Completed"
+                : hasReadPdf
+                  ? "Mark complete"
+                  : "Read PDF first"}
+            </Button>
+          </Space>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {quizzes.length === 0 ? (
+            <Tag>No quiz linked</Tag>
+          ) : (
+            quizzes.map((quiz) => {
+              const passed = hasPassed(quiz.assessment_id);
+              const latest = lastAttempt(quiz.assessment_id);
+
+              return (
+                <Tooltip
+                  key={quiz.assessment_id}
+                  title={
+                    latest
+                      ? `Last score: ${latest.score_obtained}, attempt ${latest.attempt_no}`
+                      : canStartQuiz
+                        ? "Ready to start"
+                        : "Read the PDF first"
+                  }
+                >
+                  <Button
+                    icon={
+                      passed ? <FileDoneOutlined /> : <PlayCircleOutlined />
+                    }
+                    type={passed ? "default" : "primary"}
+                    disabled={passed || !canStartQuiz}
+                    onClick={() => onStartQuiz(quiz)}
+                  >
+                    {passed
+                      ? `Quiz passed: ${quiz.assessment_title}`
+                      : canStartQuiz
+                        ? `Start Test: ${quiz.assessment_title}`
+                        : `Locked: ${quiz.assessment_title}`}
+                  </Button>
+                </Tooltip>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <Modal
+        open={pdfOpen}
+        title={pdf?.title || module?.module_title || "Module PDF"}
+        onCancel={() => setPdfOpen(false)}
+        footer={[
+          <Button key="close" onClick={() => setPdfOpen(false)}>
+            Close
+          </Button>,
+          <Button
+            key="read"
+            type="primary"
+            onClick={handleFinishedReading}
+          >
+            I finished reading
+          </Button>,
+        ]}
+        width="85%"
+        style={{ top: 20 }}
+      >
+        {pdf?.file_url ? (
+          <iframe
+            src={pdf.file_url}
+            title={pdf.title || "Module PDF"}
+            style={{
+              width: "100%",
+              height: "78vh",
+              border: "none",
+            }}
+          />
+        ) : (
+          <Alert
+            type="warning"
+            showIcon
+            message="No PDF uploaded for this module"
+          />
+        )}
+      </Modal>
+    </>
+  );
+}
+
 function TrainingCard({
   assignment,
   userId,
@@ -203,9 +394,9 @@ function TrainingCard({
   const { data: certificateIssues = [] } = useCertificateIssuesByUser(userId);
   const { data: attendance = [] } = useAttendanceByUser(userId);
   const { data: attendanceSummary } = useAttendanceSummary(
-  userId,
-  assignment.course_id,
-);
+    userId,
+    assignment.course_id,
+  );
   const complete = useCompleteModule();
   const issueCertificate = useIssueCertificate();
 
@@ -244,7 +435,7 @@ function TrainingCard({
       return message.warning(
         "No active certification is configured for this course yet.",
       );
-      
+
     issueCertificate.mutate(
       {
         user_id: userId,
@@ -306,73 +497,92 @@ function TrainingCard({
                     : p.status === "in_progress"
                       ? "blue"
                       : "gray",
-                children: (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                      <div>
-                        <div className="font-semibold">
-                          {mod?.module_title ?? `Module ${p.module_id}`}
-                        </div>
-                        <div className="text-sm text-slate-500">
-                          Module status: {moduleStatus(p)}
-                        </div>
-                      </div>
-                      <Button
-                        type={p.status === "completed" ? "default" : "primary"}
-                        disabled={p.status === "completed"}
-                        onClick={() =>
-                          complete.mutate(p.id, {
-                            onSuccess: () =>
-                              message.success("Module completed"),
-                            onError: (error) =>
-                              message.error(getApiErrorMessage(error)),
-                          })
-                        }
-                      >
-                        {p.status === "completed"
-                          ? "Completed"
-                          : "Mark complete"}
-                      </Button>
-                    </div>
+                // children: (
+                //   <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                //     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                //       <div>
+                //         <div className="font-semibold">
+                //           {mod?.module_title ?? `Module ${p.module_id}`}
+                //         </div>
+                //         <div className="text-sm text-slate-500">
+                //           Module status: {moduleStatus(p)}
+                //         </div>
+                //       </div>
+                //       <Button
+                //         type={p.status === "completed" ? "default" : "primary"}
+                //         disabled={p.status === "completed"}
+                //         onClick={() =>
+                //           complete.mutate(p.id, {
+                //             onSuccess: () =>
+                //               message.success("Module completed"),
+                //             onError: (error) =>
+                //               message.error(getApiErrorMessage(error)),
+                //           })
+                //         }
+                //       >
+                //         {p.status === "completed"
+                //           ? "Completed"
+                //           : "Mark complete"}
+                //       </Button>
+                //     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {quizzes.length === 0 ? (
-                        <Tag>No quiz linked</Tag>
-                      ) : (
-                        quizzes.map((quiz) => {
-                          const passed = hasPassed(quiz.assessment_id);
-                          const latest = lastAttempt(quiz.assessment_id);
-                          return (
-                            <Tooltip
-                              key={quiz.assessment_id}
-                              title={
-                                latest
-                                  ? `Last score: ${latest.score_obtained}, attempt ${latest.attempt_no}`
-                                  : "No attempts yet"
-                              }
-                            >
-                              <Button
-                                icon={
-                                  passed ? (
-                                    <FileDoneOutlined />
-                                  ) : (
-                                    <PlayCircleOutlined />
-                                  )
-                                }
-                                type={passed ? "default" : "primary"}
-                                disabled={passed}
-                                onClick={() => setActiveQuiz(quiz)}
-                              >
-                                {passed
-                                  ? `Quiz passed: ${quiz.assessment_title}`
-                                  : `Take quiz: ${quiz.assessment_title}`}
-                              </Button>
-                            </Tooltip>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
+                //     <div className="mt-4 flex flex-wrap gap-2">
+                //       {quizzes.length === 0 ? (
+                //         <Tag>No quiz linked</Tag>
+                //       ) : (
+                //         quizzes.map((quiz) => {
+                //           const passed = hasPassed(quiz.assessment_id);
+                //           const latest = lastAttempt(quiz.assessment_id);
+                //           return (
+                //             <Tooltip
+                //               key={quiz.assessment_id}
+                //               title={
+                //                 latest
+                //                   ? `Last score: ${latest.score_obtained}, attempt ${latest.attempt_no}`
+                //                   : "No attempts yet"
+                //               }
+                //             >
+                //               <Button
+                //                 icon={
+                //                   passed ? (
+                //                     <FileDoneOutlined />
+                //                   ) : (
+                //                     <PlayCircleOutlined />
+                //                   )
+                //                 }
+                //                 type={passed ? "default" : "primary"}
+                //                 disabled={passed}
+                //                 onClick={() => setActiveQuiz(quiz)}
+                //               >
+                //                 {passed
+                //                   ? `Quiz passed: ${quiz.assessment_title}`
+                //                   : `Take quiz: ${quiz.assessment_title}`}
+                //               </Button>
+                //             </Tooltip>
+                //           );
+                //         })
+                //       )}
+                //     </div>
+                //   </div>
+                // ),
+                children: (
+                  <ModuleLearningItem
+                    progress={p}
+                    module={mod}
+                    quizzes={quizzes}
+                    userId={userId}
+                    hasPassed={hasPassed}
+                    lastAttempt={lastAttempt}
+                    onStartQuiz={(quiz) => setActiveQuiz(quiz)}
+                    completeLoading={complete.isPending}
+                    onCompleteModule={(progressId) =>
+                      complete.mutate(progressId, {
+                        onSuccess: () => message.success("Module completed"),
+                        onError: (error) =>
+                          message.error(getApiErrorMessage(error)),
+                      })
+                    }
+                  />
                 ),
               };
             })}

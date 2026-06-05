@@ -459,11 +459,13 @@ export const api = {
         role_id: payload.role_id,
         manager_id: payload.manager_id ?? null,
         status: payload.status ?? "active",
+        department_id:
+          payload.department_id !== undefined && payload.department_id !== null
+            ? Number(payload.department_id)
+            : undefined,
       };
       const raw = await requestFirst<any>([
         { method: "POST", url: "/api/auth/create", data: body },
-        { method: "POST", url: "/api/auth/register", data: body },
-        { method: "POST", url: "/api/users", data: body },
       ]);
       return normalizeUser(raw?.user ?? raw);
     },
@@ -1024,69 +1026,6 @@ export const api = {
     delete: async (id: number) =>
       unwrap(await http.delete(`/api/assessment-rules/${id}`)),
   },
-
-  attendance: {
-    summaryByCourse: async (userId: number, courseId: number) =>
-      unwrap(
-        await http.get(
-          `/api/users/${userId}/courses/${courseId}/attendance-summary`,
-        ),
-      ),
-    mark: async (sessionId: number, payload: any) =>
-      unwrap(
-        await http.post(`/api/training-sessions/${sessionId}/attendance`, {
-          ...payload,
-          user_id: Number(payload.user_id),
-          marked_by_user_id:
-            payload.marked_by_user_id !== undefined &&
-            payload.marked_by_user_id !== null
-              ? Number(payload.marked_by_user_id)
-              : undefined,
-        }),
-      ),
-
-    bulkMark: async (sessionId: number, payload: any) =>
-      unwrap(
-        await http.post(`/api/training-sessions/${sessionId}/attendance/bulk`, {
-          attendances: payload.attendances.map((item: any) => ({
-            ...item,
-            user_id: Number(item.user_id),
-            marked_by_user_id:
-              item.marked_by_user_id !== undefined &&
-              item.marked_by_user_id !== null
-                ? Number(item.marked_by_user_id)
-                : undefined,
-          })),
-        }),
-      ),
-
-    bySession: async (sessionId: number) =>
-      listify<any>(
-        await requestFirst<any[]>([
-          {
-            method: "GET",
-            url: `/api/training-sessions/${sessionId}/attendance`,
-          },
-        ]),
-      ),
-
-    byUser: async (userId: number) =>
-      listify<any>(
-        await requestFirst<any[]>([
-          {
-            method: "GET",
-            url: `/api/users/${userId}/attendance`,
-          },
-        ]),
-      ),
-
-    update: async (attendanceId: number, payload: any) =>
-      unwrap(
-        await http.put(`/api/attendance/${attendanceId}`, {
-          ...payload,
-        }),
-      ),
-  },
   trainingSessions: {
     list: async (params?: any) =>
       listify<any>(
@@ -1240,29 +1179,94 @@ export const api = {
   },
   departmentAssignments: {
     list: async () => {
-    const res = await requestFirst<any>([
-      {
-        method: "GET",
-        url: "/api/training-assignments/department",
-      },
-    ]);
+      const res = await requestFirst<any>([
+        {
+          method: "GET",
+          url: "/api/training-assignments/department",
+        },
+      ]);
 
-    if (Array.isArray(res)) return res;
-    if (Array.isArray(res?.assignments)) return res.assignments;
-    if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.assignments)) return res.assignments;
+      if (Array.isArray(res?.data)) return res.data;
 
-    return [];
+      return [];
+    },
+    assignCourse: async (payload: any) => {
+      return await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/training-assignments/department",
+          data: payload,
+        },
+      ]);
+    },
   },
-  assignCourse: async (payload: any) => {
-    return await requestFirst<any>([
-      {
-        method: "POST",
-        url: "/api/training-assignments/department",
-        data: payload,
-      },
-    ]);
+  attendance: {
+    summaryByCourse: async (userId: number, courseId: number) =>
+      unwrap(
+        await http.get(
+          `/api/users/${userId}/courses/${courseId}/attendance-summary`,
+        ),
+      ),
+    mark: async (sessionId: number, payload: any) =>
+      unwrap(
+        await http.post(
+          `/api/attendances/training-sessions/${sessionId}/attendance`,
+          {
+            ...payload,
+            user_id: Number(payload.user_id),
+            marked_by_user_id:
+              payload.marked_by_user_id !== undefined &&
+              payload.marked_by_user_id !== null
+                ? Number(payload.marked_by_user_id)
+                : undefined,
+          },
+        ),
+      ),
+
+    bulkMark: async (sessionId: number, payload: any) =>
+      unwrap(
+        await http.post(`/api/training-sessions/${sessionId}/attendance/bulk`, {
+          attendances: payload.attendances.map((item: any) => ({
+            ...item,
+            user_id: Number(item.user_id),
+            marked_by_user_id:
+              item.marked_by_user_id !== undefined &&
+              item.marked_by_user_id !== null
+                ? Number(item.marked_by_user_id)
+                : undefined,
+          })),
+        }),
+      ),
+
+    bySession: async (sessionId: number) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          {
+            method: "GET",
+            url: `/api/training-sessions/${sessionId}/attendance`,
+          },
+        ]),
+      ),
+
+    byUser: async (userId: number) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          {
+            method: "GET",
+            url: `/api/users/${userId}/attendance`,
+          },
+        ]),
+      ),
+
+    update: async (attendanceId: number, payload: any) =>
+      unwrap(
+        await http.put(`/api/attendance/${attendanceId}`, {
+          ...payload,
+        }),
+      ),
   },
-},
   meta: { API_BASE_URL, currentUserRole },
 };
 
