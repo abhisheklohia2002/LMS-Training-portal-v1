@@ -61,6 +61,7 @@ import {
   useMark,
 } from "../../hooks/useAttendance";
 import { useModuleDocuments } from "../../hooks/useModuleDocuments";
+import { useCreateTrainingSession } from "../../hooks/useTrainingSessionsByCourse";
 
 function moduleStatus(progress?: ModuleProgress) {
   if (!progress) return "locked";
@@ -195,66 +196,101 @@ function ModuleLearningItem({
   module,
   quizzes,
   userId,
+  sessionId,
   hasPassed,
   lastAttempt,
   onStartQuiz,
   onCompleteModule,
   completeLoading,
+  courseId
 }: {
   progress: ModuleProgress;
   module?: any;
   quizzes: Assessment[];
   userId: number;
+  sessionId?: number;
   hasPassed: (assessmentId: number) => boolean;
   lastAttempt: (assessmentId: number) => any;
   onStartQuiz: (quiz: Assessment) => void;
   onCompleteModule: (progressId: number) => void;
   completeLoading: boolean;
+  courseId:number
 }) {
   const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
-  const markAttendance = useMark();
   const documents = Array.isArray(docsRaw)
     ? docsRaw
     : docsRaw?.data || docsRaw?.documents || [];
 
   const pdf = documents?.[0];
-
+  const createSession = useCreateTrainingSession();
+  const markAttendance = useMark();
   const [pdfOpen, setPdfOpen] = useState(false);
   const [hasReadPdf, setHasReadPdf] = useState(
     progress.status === "completed" || progress.status === "in_progress",
   );
 
   const canStartQuiz = hasReadPdf || !pdf;
-  
-  const handleFinishedReading = () => {
-  const checkIn = new Date();
-  const checkOut = new Date(checkIn.getTime() + 60 * 1000); // +1 minute
 
-  markAttendance.mutate(
-    {
-      sessionId: 1, // temporary; later use actual session id
-      payload: {
-        user_id: userId,
-        marked_by_user_id: userId,
-        status: "present",
-        check_in_time: checkIn.toISOString(),
-        check_out_time: checkOut.toISOString(),
-        attendance_source: "manual",
-        remarks: `Finished reading ${module?.module_title ?? "module PDF"}`,
+  const handleFinishedReading = () => {
+    const checkIn = new Date();
+    const checkOut = new Date(checkIn.getTime() + 60 * 1000);
+
+    createSession.mutate(
+      {
+        course_id: courseId,
+        module_id: progress.module_id,
+        created_by_user_id: userId,
+        session_title: `${module?.module_title ?? "Module"} Reading Session`,
+        session_type: "self_paced",
+        start_time: checkIn.toISOString(),
+        end_time: checkOut.toISOString(),
+        is_mandatory: true,
       },
-    },
-    {
-      onSuccess: () => {
-        setHasReadPdf(true);
-        setPdfOpen(false);
-        message.success("Reading completed. You can start the test.");
+      {
+        onSuccess: (sessionResponse: any) => {
+          const session =
+            sessionResponse?.data ||
+            sessionResponse?.session ||
+            sessionResponse;
+
+          const sessionId = session?.session_id || session?.id;
+
+          if (!sessionId) {
+            message.error("Session created but session id missing");
+            return;
+          }
+
+          markAttendance.mutate(
+            {
+              sessionId,
+              payload: {
+                user_id: userId,
+                marked_by_user_id: userId,
+                status: "present",
+                check_in_time: checkIn.toISOString(),
+                check_out_time: checkOut.toISOString(),
+                attendance_source: "manual",
+                remarks: `Finished reading ${module?.module_title ?? "module PDF"}`,
+              },
+            },
+            {
+              onSuccess: () => {
+                setHasReadPdf(true);
+                setPdfOpen(false);
+                message.success("Reading completed. You can start the test.");
+              },
+              onError: (error) => {
+                message.error(getApiErrorMessage(error));
+              },
+            },
+          );
+        },
+        onError: (error) => {
+          message.error(getApiErrorMessage(error));
+        },
       },
-      onError: (error) => {
-        message.error(getApiErrorMessage(error));
-      },
-    },
-  );
-};
+    );
+  };
   return (
     <>
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -340,11 +376,7 @@ function ModuleLearningItem({
           <Button key="close" onClick={() => setPdfOpen(false)}>
             Close
           </Button>,
-          <Button
-            key="read"
-            type="primary"
-            onClick={handleFinishedReading}
-          >
+          <Button key="read" type="primary" onClick={handleFinishedReading}>
             I finished reading
           </Button>,
         ]}
@@ -399,7 +431,25 @@ function TrainingCard({
   );
   const complete = useCompleteModule();
   const issueCertificate = useIssueCertificate();
+  const { data: sessions } = useCreateTrainingSession();
+  const courseSessions = Array.isArray(sessions) ? sessions : [];
 
+  const getSessionForModule = (moduleId: number) => {
+    const moduleSession = courseSessions.find(
+      (s: any) => Number(s.module_id) === Number(moduleId),
+    );
+
+    if (moduleSession) {
+      return moduleSession.session_id;
+    }
+
+    const courseSession = courseSessions.find(
+      (s: any) =>
+        !s.module_id || Number(s.course_id) === Number(assignment.course_id),
+    );
+
+    return courseSession?.session_id;
+  };
   const course = findCourse(courses, assignment.course_id);
   const completed = progress.filter((p) => p.status === "completed").length;
   const total = progress.length || 1;
@@ -568,6 +618,8 @@ function TrainingCard({
                 children: (
                   <ModuleLearningItem
                     progress={p}
+                     courseId={assignment.course_id}
+                    sessionId={getSessionForModule(p.module_id)}
                     module={mod}
                     quizzes={quizzes}
                     userId={userId}
