@@ -1037,7 +1037,6 @@ export const api = {
           },
         ]),
       ),
-
     get: async (id: number) =>
       unwrap(await http.get(`/api/training-sessions/${id}`)),
 
@@ -1206,7 +1205,7 @@ export const api = {
     summaryByCourse: async (userId: number, courseId: number) =>
       unwrap(
         await http.get(
-          `/api/users/${userId}/courses/${courseId}/attendance-summary`,
+          `/api/attendances/users/${userId}/courses/${courseId}/attendance-summary`,
         ),
       ),
     mark: async (sessionId: number, payload: any) =>
@@ -1227,7 +1226,7 @@ export const api = {
 
     bulkMark: async (sessionId: number, payload: any) =>
       unwrap(
-        await http.post(`/api/training-sessions/${sessionId}/attendance/bulk`, {
+        await http.post(`/api/attendances/training-sessions/${sessionId}/attendance/bulk`, {
           attendances: payload.attendances.map((item: any) => ({
             ...item,
             user_id: Number(item.user_id),
@@ -1245,7 +1244,7 @@ export const api = {
         await requestFirst<any[]>([
           {
             method: "GET",
-            url: `/api/training-sessions/${sessionId}/attendance`,
+            url: `/api/attendances/training-sessions/${sessionId}/attendance`,
           },
         ]),
       ),
@@ -1255,14 +1254,14 @@ export const api = {
         await requestFirst<any[]>([
           {
             method: "GET",
-            url: `/api/users/${userId}/attendance`,
+            url: `/api/attendances/users/${userId}/attendance`,
           },
         ]),
       ),
 
     update: async (attendanceId: number, payload: any) =>
       unwrap(
-        await http.put(`/api/attendance/${attendanceId}`, {
+        await http.put(`/api/attendances/attendance/${attendanceId}`, {
           ...payload,
         }),
       ),
