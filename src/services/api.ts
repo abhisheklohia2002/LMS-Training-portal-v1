@@ -502,14 +502,19 @@ export const api = {
       ),
   },
 
-  uploadModulePdf: async (moduleId: number, file: File, title?: string,publicId?:string) => {
+  uploadModulePdf: async (
+    moduleId: number,
+    file: File,
+    title?: string,
+    publicId?: string,
+  ) => {
     const formData = new FormData();
 
     formData.append("module_id", String(moduleId));
     formData.append("title", title || "");
     formData.append("file", file);
-    if(publicId){
-    formData.append("publicId", publicId);
+    if (publicId) {
+      formData.append("publicId", publicId);
     }
     return await requestFirst<any>([
       {
@@ -677,6 +682,14 @@ export const api = {
           { method: "POST", url: "/api/assessments", data: payload },
         ]),
       ),
+    update: async (id: number, payload: any) =>
+      requestFirst<any>([
+        {
+          method: "PUT",
+          url: `/api/assessments/${id}`,
+          data: payload,
+        },
+      ]),
   },
 
   assessmentQuestions: {
@@ -712,6 +725,22 @@ export const api = {
       requestFirst<any>([
         { method: "DELETE", url: `/api/assessment-questions/${id}` },
       ]),
+
+    bulkUpload: async (assessmentId: number, file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      return requestFirst<any>([
+        {
+          method: "POST",
+          url: `/api/assessment-questions/${assessmentId}/questions/bulk-upload`,
+          data: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      ]);
+    },
   },
 
   assessmentAttempts: {
@@ -1228,17 +1257,20 @@ export const api = {
 
     bulkMark: async (sessionId: number, payload: any) =>
       unwrap(
-        await http.post(`/api/attendances/training-sessions/${sessionId}/attendance/bulk`, {
-          attendances: payload.attendances.map((item: any) => ({
-            ...item,
-            user_id: Number(item.user_id),
-            marked_by_user_id:
-              item.marked_by_user_id !== undefined &&
-              item.marked_by_user_id !== null
-                ? Number(item.marked_by_user_id)
-                : undefined,
-          })),
-        }),
+        await http.post(
+          `/api/attendances/training-sessions/${sessionId}/attendance/bulk`,
+          {
+            attendances: payload.attendances.map((item: any) => ({
+              ...item,
+              user_id: Number(item.user_id),
+              marked_by_user_id:
+                item.marked_by_user_id !== undefined &&
+                item.marked_by_user_id !== null
+                  ? Number(item.marked_by_user_id)
+                  : undefined,
+            })),
+          },
+        ),
       ),
 
     bySession: async (sessionId: number) =>
