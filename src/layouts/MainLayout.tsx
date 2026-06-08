@@ -32,15 +32,16 @@ const { Header, Sider, Content } = Layout;
 export function MainLayout() {
   const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(() => {
-  return localStorage.getItem("lms_theme") === "dark";
-});
+    return localStorage.getItem("lms_theme") === "dark";
+  });
+  const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const logout = useLogout();
   const { data: me } = useMe();
   const { data: notes } = useNotifications();
   const unread = notes?.filter((n) => !n.read_status).length ?? 0;
-  const selectedKey = "/" + location.pathname.split("/")[1];
+  const selectedKey = location.pathname;
   const role = me?.role.role_name || localStorage.getItem("lms_role");
   const isManagerOrAdmin = canManageLms(role);
   const items = useMemo(() => {
@@ -94,7 +95,6 @@ export function MainLayout() {
             icon: <TeamOutlined />,
             label: <Link to="/users">Users</Link>,
           },
-
           {
             key: "/roles",
             icon: <UserOutlined />,
@@ -103,24 +103,35 @@ export function MainLayout() {
           {
             key: "/departments",
             icon: <BuildOutlined />,
-            label: <Link to="/departments">Departments</Link>,
-          },
-          {
-            key: "/department-mappings",
-            icon: <TeamOutlined />,
-            label: <Link to="/department-mappings">Department Mappings</Link>,
-          },
-          {
-            key: "/department-assignments",
-            icon: <FileTextOutlined />,
-            label: (
-              <Link to="/department-assignments">Department Assignments</Link>
-            ),
-          },
-          {
-            key: "/mappings",
-            icon: <FileTextOutlined />,
-            label: <Link to="/mappings">Mappings</Link>,
+            label: "Departments",
+            children: [
+              {
+                key: "/departments",
+                label: <Link to="/departments">Department List</Link>,
+              },
+              {
+                key: "/departments/mappings",
+                label: (
+                  <Link to="/departments/mappings">Department Mappings</Link>
+                ),
+              },
+              {
+                key: "/departments/assignments",
+                label: (
+                  <Link to="/departments/assignments">
+                    Department Assignments
+                  </Link>
+                ),
+              },
+              {
+                key: "/departments/training-mappings",
+                label: (
+                  <Link to="/departments/training-mappings">
+                    Training Mappings
+                  </Link>
+                ),
+              },
+            ],
           },
           {
             key: "/assignments",
@@ -132,7 +143,6 @@ export function MainLayout() {
             icon: <FileProtectOutlined />,
             label: <Link to="/assessments">Assessments</Link>,
           },
-
           {
             key: "/certifications",
             icon: <SafetyCertificateOutlined />,
@@ -161,12 +171,17 @@ export function MainLayout() {
     // if (roleName === undefined) return navigate('/login');?s
     return roleName;
   };
+  useEffect(() => {
+  if (location.pathname.startsWith("/departments")) {
+    setOpenKeys(["/departments-group"]);
+  }
+}, [location.pathname]);
 
   useEffect(() => {
-  localStorage.setItem("lms_theme", isDarkMode ? "dark" : "light");
+    localStorage.setItem("lms_theme", isDarkMode ? "dark" : "light");
 
-  document.documentElement.classList.toggle("dark", isDarkMode);
-}, [isDarkMode]);
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
   return (
     <Layout className="h-screen overflow-hidden">
       <Sider

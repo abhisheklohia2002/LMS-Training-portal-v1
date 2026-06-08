@@ -45,22 +45,58 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
             children: [{ path: "/roles", element: <RolesPage /> }],
           },
-           {
-            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-            children: [{ path: "/departments", element: <DepartmentsPage /> }],
-          },
-            {
-            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-            children: [{ path: "/department-assignments", element: <DepartmentAssignmentPanel /> }],
-          },
-           {
-            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-            children: [{ path: "/department-mappings", element: <DepartmentMappingsPanel /> }],
-          },
+          // {
+          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+          //   children: [{ path: "/departments", element: <DepartmentsPage /> }],
+          // },
+          // {
+          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+          //   children: [
+          //     {
+          //       path: "/department-assignments",
+          //       element: <DepartmentAssignmentPanel />,
+          //     },
+          //   ],
+          // },
+          // {
+          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+          //   children: [
+          //     {
+          //       path: "/department-mappings",
+          //       element: <DepartmentMappingsPanel />,
+          //     },
+          //   ],
+          // },
+          // {
+          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+          //   children: [
+          //     { path: "/mappings", element: <TrainingMappingsPage /> },
+          //   ],
+          // },
           {
             element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
             children: [
-              { path: "/mappings", element: <TrainingMappingsPage /> },
+              {
+                path: "/departments",
+                children: [
+                  {
+                    index: true,
+                    element: <DepartmentsPage />,
+                  },
+                  {
+                    path: "mappings",
+                    element: <DepartmentMappingsPanel />,
+                  },
+                  {
+                    path: "assignments",
+                    element: <DepartmentAssignmentPanel />,
+                  },
+                  {
+                    path: "training-mappings",
+                    element: <TrainingMappingsPage />,
+                  },
+                ],
+              },
             ],
           },
           {
