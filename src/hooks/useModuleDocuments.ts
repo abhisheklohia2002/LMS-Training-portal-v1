@@ -17,11 +17,13 @@ export function useUploadModulePdf(courseId: number) {
       moduleId,
       file,
       title,
+      publicId,
     }: {
       moduleId: number;
       file: File;
       title?: string;
-    }) => api.uploadModulePdf(moduleId, file, title),
+      publicId?:string;
+    }) => api.uploadModulePdf(moduleId, file, title,publicId),
 
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

@@ -30,7 +30,7 @@ function CourseDetail({ courseId }: { courseId: number }) {
   const createModule = useCreateModule();
   const uploadModulePdf = useUploadModulePdf(courseId);
   const [moduleOpen, setModuleOpen] = useState(false);
-
+  // console.log(mods,'mods')
   return (
     <>
       <Tabs

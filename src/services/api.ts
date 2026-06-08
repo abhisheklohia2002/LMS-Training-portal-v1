@@ -502,13 +502,15 @@ export const api = {
       ),
   },
 
-  uploadModulePdf: async (moduleId: number, file: File, title?: string) => {
+  uploadModulePdf: async (moduleId: number, file: File, title?: string,publicId?:string) => {
     const formData = new FormData();
 
     formData.append("module_id", String(moduleId));
     formData.append("title", title || "");
     formData.append("file", file);
-
+    if(publicId){
+    formData.append("publicId", publicId);
+    }
     return await requestFirst<any>([
       {
         method: "POST",

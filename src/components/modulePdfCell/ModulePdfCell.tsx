@@ -30,12 +30,12 @@ export function ModulePdfCell({
 }) {
   const { data } = useModuleDocuments(moduleId);
   const uploadModulePdf = useUploadModulePdf(courseId);
-
   const [previewOpen, setPreviewOpen] = useState(false);
   const [currentPdf, setCurrentPdf] = useState<ModuleDocument | null>(null);
-
+  
   const documents: ModuleDocument[] = data?.documents || data || [];
   const latestPdf = currentPdf || documents?.[0] || null;
+  // console.log(documents,'-------documents module')
 
   useEffect(() => {
     if (!currentPdf && documents?.length > 0) {
@@ -70,13 +70,18 @@ export function ModulePdfCell({
               message.error("Only PDF files are allowed");
               return Upload.LIST_IGNORE;
             }
-
-            uploadModulePdf.mutate(
-              {
-                moduleId,
+            let payload:any = {
+               moduleId,
                 file,
                 title: moduleTitle,
-              },
+            }
+
+            if(documents[0]?.public_id && latestPdf ){
+               payload.publicId = documents[0]?.public_id
+            }
+
+            uploadModulePdf.mutate(
+              payload,
               {
                 onSuccess: (data) => {
                   message.success("PDF uploaded successfully");
