@@ -101,6 +101,12 @@ export function MainLayout() {
             label: <Link to="/roles">Roles</Link>,
           },
           {
+            key: "/entity",
+            icon: <BuildOutlined />,
+            label: <Link to="/entity">Entity</Link>,
+          },
+
+          {
             key: "/departments",
             icon: <BuildOutlined />,
             label: "Departments",

@@ -14,73 +14,64 @@ import {
   message,
 } from "antd";
 import {
+  ApartmentOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
-  TeamOutlined,
 } from "@ant-design/icons";
-import { useEntities } from "../../hooks/useEntities";
+
 import {
-  useCreateDepartment,
-  useDeleteDepartment,
-  useDepartments,
-  useUpdateDepartment,
-} from "../../hooks/useDepartments";
-import { CreateDepartmentPayload, Department, Entity } from "../../types";
+  useCreateEntity,
+  useDeleteEntity,
+  useEntities,
+  useUpdateEntity,
+} from "../../hooks/useEntities";
+import { CreateEntityPayload, Entity } from "../../types";
 
 const { Title, Text } = Typography;
 
-type DepartmentFormValues = {
-  department_name: string;
+type EntityFormValues = {
+  entity_name: string;
+  entity_type?: string;
   description?: string;
   is_active: boolean;
-  entity_id: number;
 };
 
-export function DepartmentsPage() {
-  const { data, isLoading } = useDepartments();
-  const createDepartment = useCreateDepartment();
-  const updateDepartment = useUpdateDepartment();
-  const deleteDepartment = useDeleteDepartment();
-  const { data: entityData, isLoading: isEntitiesLoading } = useEntities();
-  const [form] = Form.useForm<DepartmentFormValues>();
+export function EntitiesPage() {
+  const { data, isLoading } = useEntities();
+  const createEntity = useCreateEntity();
+  const updateEntity = useUpdateEntity();
+  const deleteEntity = useDeleteEntity();
+
+  const [form] = Form.useForm<EntityFormValues>();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(
-    null,
-  );
-
-  const departments: Department[] = useMemo(() => {
-    return data?.departments || data || [];
-  }, [data]);
+  const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
 
   const entities: Entity[] = useMemo(() => {
-    if (Array.isArray(entityData)) return entityData;
-    if (Array.isArray(entityData?.entities)) return entityData.entities;
-    if (Array.isArray(entityData?.data)) return entityData.data;
+    return data?.entities || data || [];
+  }, [data]);
 
-    return [];
-  }, [entityData]);
-
-  const isSubmitting = createDepartment.isPending || updateDepartment.isPending;
+  const isSubmitting = createEntity.isPending || updateEntity.isPending;
 
   const openCreateModal = () => {
-    setEditingDepartment(null);
+    setEditingEntity(null);
     form.resetFields();
     form.setFieldsValue({
+      entity_type: "company",
       is_active: true,
     });
     setModalOpen(true);
   };
 
-  const openEditModal = (department: Department) => {
-    setEditingDepartment(department);
+  const openEditModal = (entity: Entity) => {
+    setEditingEntity(entity);
 
     form.setFieldsValue({
-      department_name: department.department_name,
-      description: department.description,
-      is_active: department.is_active,
-      entity_id: department.entity_id,
+      entity_name: entity.entity_name,
+      entity_type: entity.entity_type || "company",
+      description: entity.description,
+      is_active: entity.is_active,
     });
 
     setModalOpen(true);
@@ -88,7 +79,7 @@ export function DepartmentsPage() {
 
   const closeModal = () => {
     setModalOpen(false);
-    setEditingDepartment(null);
+    setEditingEntity(null);
     form.resetFields();
   };
 
@@ -96,27 +87,29 @@ export function DepartmentsPage() {
     try {
       const values = await form.validateFields();
 
-      const payload: CreateDepartmentPayload = {
-        department_name: values.department_name.trim(),
+      const payload: CreateEntityPayload = {
+        entity_name: values.entity_name.trim(),
+        entity_type: values.entity_type?.trim() || "",
         description: values.description?.trim() || "",
         is_active: values.is_active,
-        entity_id: values.entity_id,
       };
 
-      if (editingDepartment) {
-        updateDepartment.mutate(
+      if (editingEntity) {
+        updateEntity.mutate(
           {
-            departmentId: editingDepartment.id,
+            entityId: editingEntity.id,
             payload,
           },
           {
             onSuccess: () => {
-              message.success("Department updated successfully");
+              message.success("Entity updated successfully");
               closeModal();
             },
             onError: (error: any) => {
               message.error(
-                error?.response?.data?.error || "Department update failed",
+                error?.response?.data?.error ||
+                  error?.response?.data?.message ||
+                  "Entity update failed",
               );
             },
           },
@@ -125,14 +118,16 @@ export function DepartmentsPage() {
         return;
       }
 
-      createDepartment.mutate(payload, {
+      createEntity.mutate(payload, {
         onSuccess: () => {
-          message.success("Department created successfully");
+          message.success("Entity created successfully");
           closeModal();
         },
         onError: (error: any) => {
           message.error(
-            error?.response?.data?.error || "Department creation failed",
+            error?.response?.data?.error ||
+              error?.response?.data?.message ||
+              "Entity creation failed",
           );
         },
       });
@@ -141,14 +136,16 @@ export function DepartmentsPage() {
     }
   };
 
-  const handleDelete = (departmentId: number) => {
-    deleteDepartment.mutate(departmentId, {
+  const handleDelete = (entityId: number) => {
+    deleteEntity.mutate(entityId, {
       onSuccess: () => {
-        message.success("Department deleted successfully");
+        message.success("Entity deleted successfully");
       },
       onError: (error: any) => {
         message.error(
-          error?.response?.data?.error || "Department delete failed",
+          error?.response?.data?.error ||
+            error?.response?.data?.message ||
+            "Entity delete failed",
         );
       },
     });
@@ -156,28 +153,27 @@ export function DepartmentsPage() {
 
   const columns = [
     {
-      title: "Department",
-      dataIndex: "department_name",
-      key: "department_name",
+      title: "Entity",
+      dataIndex: "entity_name",
+      key: "entity_name",
       render: (value: string) => (
         <Space>
-          <TeamOutlined />
+          <ApartmentOutlined />
           <Text strong>{value}</Text>
         </Space>
       ),
+    },
+    {
+      title: "Type",
+      dataIndex: "entity_type",
+      key: "entity_type",
+      render: (value: string) => value || "-",
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
       render: (value: string) => value || "-",
-    },
-    {
-      title: "Entity",
-      dataIndex: "entity",
-      key: "entity",
-      render: (_: unknown, record: Department) =>
-        record.entity?.entity_name || record.entity_id || "-",
     },
     {
       title: "Status",
@@ -194,7 +190,7 @@ export function DepartmentsPage() {
       title: "Actions",
       key: "actions",
       width: 200,
-      render: (_: unknown, record: Department) => (
+      render: (_: unknown, record: Entity) => (
         <Space>
           <Button
             size="small"
@@ -205,8 +201,8 @@ export function DepartmentsPage() {
           </Button>
 
           <Popconfirm
-            title="Delete department?"
-            description="This will delete/deactivate this department."
+            title="Delete entity?"
+            description="This will delete/deactivate this entity."
             okText="Yes"
             cancelText="No"
             onConfirm={() => handleDelete(record.id)}
@@ -215,7 +211,7 @@ export function DepartmentsPage() {
               size="small"
               danger
               icon={<DeleteOutlined />}
-              loading={deleteDepartment.isPending}
+              loading={deleteEntity.isPending}
             >
               Delete
             </Button>
@@ -228,7 +224,7 @@ export function DepartmentsPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <Text type="secondary">departments</Text>
+        <Text type="secondary">entities</Text>
 
         <div
           style={{
@@ -241,11 +237,11 @@ export function DepartmentsPage() {
         >
           <div>
             <Title level={2} style={{ margin: 0 }}>
-              Department Management
+              Entity Management
             </Title>
             <Text type="secondary">
-              Create departments and use them for department-wise trainings and
-              exams.
+              Create entities and use them to organize departments, users, and
+              training flows.
             </Text>
           </div>
 
@@ -254,7 +250,7 @@ export function DepartmentsPage() {
             icon={<PlusOutlined />}
             onClick={openCreateModal}
           >
-            Create department
+            Create entity
           </Button>
         </div>
       </div>
@@ -263,7 +259,7 @@ export function DepartmentsPage() {
         rowKey="id"
         loading={isLoading}
         columns={columns}
-        dataSource={departments}
+        dataSource={entities}
         pagination={{
           pageSize: 10,
         }}
@@ -271,10 +267,10 @@ export function DepartmentsPage() {
 
       <Modal
         open={modalOpen}
-        title={editingDepartment ? "Edit Department" : "Create Department"}
+        title={editingEntity ? "Edit Entity" : "Create Entity"}
         onCancel={closeModal}
         onOk={handleSubmit}
-        okText={editingDepartment ? "Update" : "Create"}
+        okText={editingEntity ? "Update" : "Create"}
         confirmLoading={isSubmitting}
         destroyOnClose
       >
@@ -282,53 +278,68 @@ export function DepartmentsPage() {
           form={form}
           layout="vertical"
           initialValues={{
+            entity_type: "company",
             is_active: true,
           }}
         >
           <Form.Item
-            label="Entity"
-            name="entity_id"
+            label="Entity name"
+            name="entity_name"
             rules={[
               {
                 required: true,
-                message: "Entity is required",
+                message: "Entity name is required",
+              },
+              {
+                min: 2,
+                message: "Entity name must be at least 2 characters",
+              },
+            ]}
+          >
+            <Input placeholder="Example: TripXL Holidays Private Limited" />
+          </Form.Item>
+
+          <Form.Item
+            label="Entity type"
+            name="entity_type"
+            rules={[
+              {
+                required: true,
+                message: "Entity type is required",
               },
             ]}
           >
             <Select
-              showSearch
-              loading={isEntitiesLoading}
-              placeholder="Select entity"
-              optionFilterProp="label"
-              options={entities
-                .filter((entity: Entity) => entity.is_active)
-                .map((entity: Entity) => ({
-                  label: entity.entity_name,
-                  value: entity.id,
-                }))}
+              placeholder="Select entity type"
+              options={[
+                {
+                  label: "Company",
+                  value: "company",
+                },
+                {
+                  label: "Branch",
+                  value: "branch",
+                },
+                {
+                  label: "Partner",
+                  value: "partner",
+                },
+                {
+                  label: "Vendor",
+                  value: "vendor",
+                },
+                {
+                  label: "Franchise",
+                  value: "franchise",
+                },
+              ]}
             />
-          </Form.Item>
-          <Form.Item
-            label="Department name"
-            name="department_name"
-            rules={[
-              {
-                required: true,
-                message: "Department name is required",
-              },
-              {
-                min: 2,
-                message: "Department name must be at least 2 characters",
-              },
-            ]}
-          >
-            <Input placeholder="Example: Sales" />
           </Form.Item>
 
           <Form.Item label="Description" name="description">
             <Input.TextArea
               rows={3}
-              placeholder="Example: Sales and business development department"
+              placeholder="Example: Main company entity"
             />
           </Form.Item>
 

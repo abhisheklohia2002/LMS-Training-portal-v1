@@ -4,7 +4,7 @@ import { router } from "./router";
 export function App() {
   return (
     <ConfigProvider
-      theme={{ token: { borderRadius: 12, colorPrimary: "#2563eb" } }}
+      theme={{ token: { borderRadius: 12, colorPrimary: "#109B9C",colorBgTextActive:"#DF736B" } }}
     >
       <AntApp>
         <RouterProvider router={router} />

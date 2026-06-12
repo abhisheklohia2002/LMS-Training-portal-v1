@@ -24,6 +24,8 @@ import type {
   User,
   CreateDepartmentPayload,
   UpdateDepartmentPayload,
+  CreateEntityPayload,
+  UpdateEntityPayload,
 } from "../types";
 
 const API_BASE_URL =
@@ -477,6 +479,19 @@ export const api = {
       ]);
       return normalizeUser(raw?.user ?? raw);
     },
+
+    bulkUpload: async (formData: FormData) => {
+      return requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/auth/bulk-users",
+          data: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      ]);
+    },
   },
 
   courses: {
@@ -887,7 +902,54 @@ export const api = {
         ]),
       ),
   },
+  entityApi: {
+    getEntities: async () => {
+      return await requestFirst<any>([
+        {
+          method: "GET",
+          url: "/api/entities",
+        },
+      ]);
+    },
 
+    getEntityById: async (entityId: number) => {
+      return await requestFirst<any>([
+        {
+          method: "GET",
+          url: `/api/entities/${entityId}`,
+        },
+      ]);
+    },
+
+    createEntity: async (payload: CreateEntityPayload) => {
+      return await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/entities",
+          data: payload,
+        },
+      ]);
+    },
+
+    updateEntity: async (entityId: number, payload: UpdateEntityPayload) => {
+      return await requestFirst<any>([
+        {
+          method: "PUT",
+          url: `/api/entities/${entityId}`,
+          data: payload,
+        },
+      ]);
+    },
+
+    deleteEntity: async (entityId: number) => {
+      return await requestFirst<any>([
+        {
+          method: "DELETE",
+          url: `/api/entities/${entityId}`,
+        },
+      ]);
+    },
+  },
   certificateIssues: {
     list: async () => {
       try {

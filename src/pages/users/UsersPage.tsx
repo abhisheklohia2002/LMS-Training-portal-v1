@@ -1,12 +1,29 @@
-import { Button, Drawer, Form, Input, Select, Space, message } from "antd";
-import { EditOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Drawer,
+  Form,
+  Input,
+  Select,
+  Space,
+  message,
+  Upload,
+  Modal,
+  Alert,
+  Table,
+} from "antd";
+import { EditOutlined, UploadOutlined } from "@ant-design/icons";
 import { useMemo, useState } from "react";
 
 import { DataTable } from "../../components/common/DataTable";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusTag } from "../../components/common/StatusTag";
 
-import { useCreateUser, useUpdateUser, useUsers } from "../../hooks/useUsers";
+import {
+  useBulkUploadUsers,
+  useCreateUser,
+  useUpdateUser,
+  useUsers,
+} from "../../hooks/useUsers";
 import { useRoles } from "../../hooks/useRoles";
 import { useDepartments } from "../../hooks/useDepartments";
 
@@ -51,10 +68,11 @@ export function UsersPage() {
   const { data: roles } = useRoles();
   const { data: departmentsData, isLoading: departmentsLoading } =
     useDepartments();
-
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkResult, setBulkResult] = useState<any>(null);
   const create = useCreateUser();
   const update = useUpdateUser();
-
+  const bulkUpload = useBulkUploadUsers();
   const [form] = Form.useForm<UserFormValues>();
   const [open, setOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -115,7 +133,7 @@ export function UsersPage() {
   const handleSubmit = (values: UserFormValues) => {
     const payload: any = {
       full_name: values.full_name?.trim(),
-      name: values.full_name?.trim(), // keeps old backend compatible
+      name: values.full_name?.trim(), 
       email: values.email?.trim(),
       employee_code: values.employee_code?.trim() || "",
       role_id: values.role_id,
@@ -165,15 +183,64 @@ export function UsersPage() {
     });
   };
 
+  const handleBulkUpload = async (file: File) => {
+    const isXlsx = file.name.toLowerCase().endsWith(".xlsx");
+
+    if (!isXlsx) {
+      message.error("Only .xlsx files are allowed");
+      return Upload.LIST_IGNORE;
+    }
+
+    const isLessThan10MB = file.size / 1024 / 1024 < 10;
+
+    if (!isLessThan10MB) {
+      message.error("File size must be less than 10MB");
+      return Upload.LIST_IGNORE;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    bulkUpload.mutate(formData, {
+      onSuccess: (res: any) => {
+        const result = res?.data || res;
+
+        setBulkResult(result);
+        message.success("Bulk upload processed");
+         setBulkModalOpen(false);
+      },
+      onError: (error: any) => {
+        message.error(
+          error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            "Bulk upload failed",
+        );
+      },
+    });
+
+    return false;
+  };
   return (
     <>
       <PageHeader
         title="User Management"
         subtitle="Search, create and manage learners, managers and admins."
         actions={
-          <Button type="primary" onClick={openCreateDrawer}>
-            Create user
-          </Button>
+          <Space>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={() => {
+                setBulkResult(null);
+                setBulkModalOpen(true);
+              }}
+            >
+              Bulk upload
+            </Button>
+
+            <Button type="primary" onClick={openCreateDrawer}>
+              Create user
+            </Button>
+          </Space>
         }
       />
 
@@ -223,6 +290,88 @@ export function UsersPage() {
         ]}
       />
 
+      <Modal
+        open={bulkModalOpen}
+        onCancel={() => {
+          setBulkModalOpen(false);
+          setBulkResult(null);
+        }}
+        title="Bulk upload users"
+        footer={null}
+        width={760}
+      >
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Alert
+            type="info"
+            showIcon
+            message="Upload .xlsx file only"
+            description="Expected columns: Full Name, Email, Employee Code, Password. Duplicate emails and employee codes will be rejected row-wise."
+          />
+
+          <Upload
+            accept=".xlsx"
+            maxCount={1}
+            beforeUpload={handleBulkUpload}
+            showUploadList={false}
+          >
+            <Button icon={<UploadOutlined />} loading={bulkUpload.isPending}>
+              Select Excel file
+            </Button>
+          </Upload>
+
+          {bulkResult && (
+            <>
+              <Alert
+                type={bulkResult.failedCount > 0 ? "warning" : "success"}
+                showIcon
+                message="Upload summary"
+                description={
+                  <div>
+                    <div>Total rows: {bulkResult.totalRows}</div>
+                    <div>Success: {bulkResult.successCount}</div>
+                    <div>Failed: {bulkResult.failedCount}</div>
+                  </div>
+                }
+              />
+
+              {Array.isArray(bulkResult.errors) &&
+                bulkResult.errors.length > 0 && (
+                  <Table
+                    size="small"
+                    rowKey={(_, index) => String(index)}
+                    pagination={{
+                      pageSize: 5,
+                    }}
+                    dataSource={bulkResult.errors}
+                    columns={[
+                      {
+                        title: "Row",
+                        dataIndex: "row",
+                      },
+                      {
+                        title: "Email",
+                        dataIndex: "email",
+                      },
+                      {
+                        title: "Employee Code",
+                        dataIndex: "employeeId",
+                        render: (_: unknown, record: any) =>
+                          record.employeeId ||
+                          record.empId ||
+                          record.employee_code ||
+                          "-",
+                      },
+                      {
+                        title: "Error",
+                        dataIndex: "message",
+                      },
+                    ]}
+                  />
+                )}
+            </>
+          )}
+        </Space>
+      </Modal>
       <Drawer
         open={open}
         onClose={closeDrawer}

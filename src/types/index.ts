@@ -210,12 +210,17 @@ export type Department = {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  entity_id: number;
+  entity?: Entity;
+  
 };
 
 export type CreateDepartmentPayload = {
   department_name: string;
   description?: string;
   is_active: boolean;
+  entity_id: number;
+
 };
 
 export type UpdateDepartmentPayload = {
@@ -223,3 +228,24 @@ export type UpdateDepartmentPayload = {
   description?: string;
   is_active?: boolean;
 };
+
+
+
+export type Entity = {
+  id: number;
+  entity_name: string;
+  entity_type?: string;
+  description?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CreateEntityPayload = {
+  entity_name: string;
+  entity_type?: string;
+  description?: string;
+  is_active: boolean;
+};
+
+export type UpdateEntityPayload = CreateEntityPayload;
