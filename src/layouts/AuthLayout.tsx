@@ -5,7 +5,11 @@ export function AuthLayout() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
       <div className="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-6 lg:grid-cols-2">
         <div className="hidden lg:block">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+          <p className="text-sm font-semibold uppercase tracking-widest"
+          style={{
+            color:"#109B9C"
+          }}
+          >
             TripXL Learning Portal
           </p>
 

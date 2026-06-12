@@ -33,3 +33,15 @@ export const useUpdateUser = () => {
     },
   });
 };
+
+
+export const useBulkUploadUsers = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) => api.users.bulkUpload(formData),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.users });
+    },
+  });
+};

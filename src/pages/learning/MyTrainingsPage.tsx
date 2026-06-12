@@ -23,7 +23,7 @@ import {
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusTag } from "../../components/common/StatusTag";
 import { useMe } from "../../hooks/useAuth";
@@ -70,6 +70,7 @@ function moduleStatus(progress?: ModuleProgress) {
   return "pending";
 }
 
+
 function QuizModal({
   assessment,
   userId,
@@ -82,16 +83,96 @@ function QuizModal({
   onClose: () => void;
 }) {
   const [form] = Form.useForm();
+  const quizContainerRef = useRef<HTMLDivElement | null>(null);
+  const isSubmittingRef = useRef(false);
+
   const { data: questions = [], isLoading } = useLearnerAssessmentQuestions(
     assessment?.assessment_id,
   );
+
   const submit = useSubmitAssessment();
+
+  const closeTestForViolation = (reason: string) => {
+    if (!open || isSubmittingRef.current) return;
+
+    message.error(reason);
+    form.resetFields();
+    onClose();
+  };
+
+  const exitFullscreenSafely = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Ignore browser fullscreen exit errors
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    isSubmittingRef.current = false;
+
+    const startFullscreen = async () => {
+      try {
+        await quizContainerRef.current?.requestFullscreen();
+      } catch {
+        message.warning("Please allow fullscreen mode to start the test.");
+        onClose();
+      }
+    };
+
+    const timer = window.setTimeout(startFullscreen, 100);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !isSubmittingRef.current) {
+        closeTestForViolation("Test closed because fullscreen mode was exited.");
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isSubmittingRef.current) {
+        closeTestForViolation("Test closed because you left the test screen.");
+      }
+    };
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isSubmittingRef.current) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [open]);
 
   const submitQuiz = (values: Record<string, number | number[] | string>) => {
     if (!assessment) return;
+
+    isSubmittingRef.current = true;
+
     const answers: SubmitAssessmentAnswer[] = questions.map(
       (q: AssessmentQuestion) => {
         const value = values[`q_${q.question_id}`];
+
         return {
           question_id: q.question_id,
           selected_option_ids: Array.isArray(value)
@@ -105,32 +186,70 @@ function QuizModal({
     );
 
     submit.mutate(
-      { assessment_id: assessment.assessment_id, user_id: userId, answers },
       {
-        onSuccess: (attempt) => {
+        assessment_id: assessment.assessment_id,
+        user_id: userId,
+        answers,
+      },
+      {
+        onSuccess: async (attempt) => {
+          await exitFullscreenSafely();
+
           (attempt.result_status === "passed"
             ? message.success
             : message.warning)(
             `Score ${attempt.score_obtained}: ${attempt.result_status}`,
           );
+
           form.resetFields();
           onClose();
         },
-        onError: (error) => message.error(getApiErrorMessage(error)),
+        onError: (error) => {
+          isSubmittingRef.current = false;
+          message.error(getApiErrorMessage(error));
+        },
       },
     );
   };
+if (!open) return null;
 
-  return (
-    <Modal
-      title={assessment?.assessment_title ?? "Assessment"}
-      open={open}
-      onCancel={onClose}
-      onOk={() => form.submit()}
-      confirmLoading={submit.isPending}
-      okText="Submit quiz"
-      width={760}
-    >
+return (
+  <div
+    ref={quizContainerRef}
+    className="fixed inset-0 z-[9999] flex flex-col bg-white"
+  >
+    {/* Header */}
+    <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+      <div>
+        <div className="text-xl font-semibold">
+          {assessment?.assessment_title ?? "Assessment"}
+        </div>
+        <div className="text-sm text-slate-500">
+          Fullscreen test mode is active
+        </div>
+      </div>
+
+      <Button
+        type="primary"
+        loading={submit.isPending}
+        onClick={() => form.submit()}
+      >
+        Submit quiz
+      </Button>
+    </div>
+
+    {/* Warning */}
+    <div className="shrink-0 px-6 pt-4">
+      <Alert
+        type="warning"
+        showIcon
+        message="Do not exit fullscreen, switch tabs, refresh, or close the browser."
+        description="Leaving the test screen will close your test."
+      />
+    </div>
+
+    {/* Scrollable body */}
+    <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
       {isLoading ? (
         <Card loading />
       ) : questions.length === 0 ? (
@@ -141,7 +260,7 @@ function QuizModal({
         />
       ) : (
         <Form form={form} layout="vertical" onFinish={submitQuiz}>
-          <div className="space-y-4">
+          <div className="space-y-4 pb-24">
             {questions.map((q, index) => (
               <Card
                 key={q.question_id}
@@ -187,8 +306,112 @@ function QuizModal({
           </div>
         </Form>
       )}
-    </Modal>
-  );
+    </div>
+
+    {/* Sticky footer */}
+    <div className="flex shrink-0 justify-end border-t border-slate-200 bg-white px-6 py-4">
+      <Button
+        type="primary"
+        size="large"
+        loading={submit.isPending}
+        onClick={() => form.submit()}
+      >
+        Submit quiz
+      </Button>
+    </div>
+  </div>
+);
+  // return (
+  //   <Modal
+  //     title={assessment?.assessment_title ?? "Assessment"}
+  //     open={open}
+  //     onCancel={() => {
+  //       closeTestForViolation("Test closed because you tried to exit.");
+  //     }}
+  //     onOk={() => form.submit()}
+  //     confirmLoading={submit.isPending}
+  //     okText="Submit quiz"
+  //     width="100vw"
+  //     centered
+  //     maskClosable={false}
+  //     keyboard={false}
+  //     closable={false}
+  //     destroyOnClose
+  //     styles={{
+  //       body: {
+  //         height: "calc(100vh - 130px)",
+  //         overflowY: "auto",
+  //       },
+  //     }}
+  //   >
+  //     <div ref={quizContainerRef} className="min-h-screen bg-white p-4">
+  //       <Alert
+  //         type="warning"
+  //         showIcon
+  //         className="mb-4"
+  //         message="Fullscreen test mode is active"
+  //         description="Do not exit fullscreen, switch tabs, refresh, or close the browser. Leaving the test screen will close your test."
+  //       />
+
+  //       {isLoading ? (
+  //         <Card loading />
+  //       ) : questions.length === 0 ? (
+  //         <Alert
+  //           type="warning"
+  //           showIcon
+  //           message="No questions created for this assessment yet"
+  //         />
+  //       ) : (
+  //         <Form form={form} layout="vertical" onFinish={submitQuiz}>
+  //           <div className="space-y-4">
+  //             {questions.map((q, index) => (
+  //               <Card
+  //                 key={q.question_id}
+  //                 size="small"
+  //                 title={`${index + 1}. ${q.question_text}`}
+  //                 extra={<Tag>{q.marks} marks</Tag>}
+  //               >
+  //                 <Form.Item
+  //                   name={`q_${q.question_id}`}
+  //                   rules={[
+  //                     {
+  //                       required: q.question_type !== "text",
+  //                       message: "Please answer this question",
+  //                     },
+  //                   ]}
+  //                 >
+  //                   {q.question_type === "multiple_choice" ? (
+  //                     <Checkbox.Group
+  //                       className="grid gap-2"
+  //                       options={q.options.map((o) => ({
+  //                         label: o.option_text,
+  //                         value: o.option_id,
+  //                       }))}
+  //                     />
+  //                   ) : q.question_type === "text" ? (
+  //                     <textarea
+  //                       className="w-full rounded-xl border border-slate-200 p-3"
+  //                       rows={4}
+  //                       placeholder="Type your answer"
+  //                     />
+  //                   ) : (
+  //                     <Radio.Group className="grid gap-2">
+  //                       {q.options.map((o) => (
+  //                         <Radio key={o.option_id} value={o.option_id}>
+  //                           {o.option_text}
+  //                         </Radio>
+  //                       ))}
+  //                     </Radio.Group>
+  //                   )}
+  //                 </Form.Item>
+  //               </Card>
+  //             ))}
+  //           </div>
+  //         </Form>
+  //       )}
+  //     </div>
+  //   </Modal>
+  // );
 }
 
 function ModuleLearningItem({
@@ -420,6 +643,7 @@ function TrainingCard({
     assignment.course_id,
   );
   const { data: attempts = [] } = useAssessmentAttemptsByUser(userId);
+  console.log(attempts,'attempts------')
   const { data: certifications = [] } = useCertificationsByCourse(
     assignment.course_id,
   );
