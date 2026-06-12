@@ -175,6 +175,7 @@ const normalizeUser = (user: any): User => ({
   ),
   department_id: user.department_id ?? null,
   department: user.department ?? null,
+  role:user.role.role_name ?? null
 });
 
 const normalizeCourse = (course: any): Course => ({

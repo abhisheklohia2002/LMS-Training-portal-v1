@@ -11,9 +11,9 @@ import {
   Alert,
   Table,
 } from "antd";
-import { EditOutlined, UploadOutlined } from "@ant-design/icons";
+import { DownCircleOutlined, EditOutlined, UploadOutlined } from "@ant-design/icons";
 import { useMemo, useState } from "react";
-
+import * as XLSX from "xlsx";
 import { DataTable } from "../../components/common/DataTable";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusTag } from "../../components/common/StatusTag";
@@ -51,6 +51,7 @@ type User = {
   department_id?: number;
   department?: Department;
   status: string;
+  role?:any
 };
 
 type UserFormValues = {
@@ -62,6 +63,15 @@ type UserFormValues = {
   department_id?: number;
   status: string;
 };
+
+type userResponseXls = {
+  Full_Name:string;
+  Email:string;
+  Employee_code:string;
+  Role:string;
+  Department:string;
+  Status:boolean
+}
 
 export function UsersPage() {
   const { data, isLoading } = useUsers();
@@ -133,7 +143,7 @@ export function UsersPage() {
   const handleSubmit = (values: UserFormValues) => {
     const payload: any = {
       full_name: values.full_name?.trim(),
-      name: values.full_name?.trim(), 
+      name: values.full_name?.trim(),
       email: values.email?.trim(),
       employee_code: values.employee_code?.trim() || "",
       role_id: values.role_id,
@@ -207,7 +217,7 @@ export function UsersPage() {
 
         setBulkResult(result);
         message.success("Bulk upload processed");
-         setBulkModalOpen(false);
+        setBulkModalOpen(false);
       },
       onError: (error: any) => {
         message.error(
@@ -220,6 +230,26 @@ export function UsersPage() {
 
     return false;
   };
+  const handleDownloadTemplate = () => {
+    // console.log(data)
+    const response = data?.map((elem:User,index:number)=>{
+      return {
+        Full_Name:elem.full_name,
+        Email:elem.email,
+        Employee_code:elem.employee_code,
+        Role:elem.role,
+        Department:elem.department,
+        Status:elem.status,
+      }
+    })
+    // console.log(response)
+    const worksheet = XLSX.utils.json_to_sheet(response as any[]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    const time = new Date()
+    
+    XLSX.writeFile(workbook, `User-list-${String(time.getUTCSeconds())}.xlsx`);
+  };
   return (
     <>
       <PageHeader
@@ -227,6 +257,10 @@ export function UsersPage() {
         subtitle="Search, create and manage learners, managers and admins."
         actions={
           <Space>
+             <Button
+             disabled={data?.length === 0}
+             icon = {<DownCircleOutlined/>}
+             onClick={handleDownloadTemplate}>Download template</Button>
             <Button
               icon={<UploadOutlined />}
               onClick={() => {

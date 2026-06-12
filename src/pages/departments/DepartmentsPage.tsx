@@ -16,6 +16,7 @@ import {
 import {
   DeleteOutlined,
   EditOutlined,
+  NumberOutlined,
   PlusOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
@@ -155,6 +156,20 @@ export function DepartmentsPage() {
   };
 
   const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      render: (value: string) => 
+      {
+       return  (
+        <Space>
+          {/* <NumberOutlined /> */}
+          <Text strong>{value}</Text>
+        </Space>
+      )
+      }
+    },
     {
       title: "Department",
       dataIndex: "department_name",

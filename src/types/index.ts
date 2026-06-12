@@ -27,6 +27,9 @@ export interface User {
   role_id: ID;
    department_id?: number;
   department?: any;
+  role?:{
+    role_name:string
+  }
 }
 
 export interface Course {
