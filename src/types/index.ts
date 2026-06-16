@@ -80,17 +80,18 @@ export interface ModuleProgress {
   started_at?: string | null;
   completed_at?: string | null;
 }
-export interface Assessment {
-  assessment_id: ID;
-  course_id: ID;
-  module_id?: ID | null;
+export type Assessment = {
+  assessment_id: number;
+  course_id: number;
+  module_id?: number;
   assessment_title: string;
   assessment_type: string;
   max_score: number;
   passing_score: number;
-  rule_id?: ID | null;
+  rule_id?: number;
   is_active: boolean;
-}
+  rule?: AssessmentRule;
+};
 export interface AssessmentAttempt {
   attempt_id: ID;
   assessment_id: ID;
@@ -150,13 +151,15 @@ export interface AssignmentRule {
   role_id: ID;
   is_active: boolean;
 }
-export interface AssessmentRule {
-  assessment_rule_id: ID;
+export type AssessmentRule = {
+  assessment_rule_id: number;
   max_attempts: number;
   passing_score: number;
   retake_allowed: boolean;
-  evaluation_method: string;
-}
+  evaluation_method?: string;
+};
+
+
 export interface CertificationRule {
   certification_rule_id: ID;
   issue_on_course_completion: boolean;

@@ -595,63 +595,80 @@ export const api = {
           { method: "POST", url: "/api/training-mappings", data: payload },
         ]),
       ),
+      
   },
 
   assignments: {
-    list: async () =>
-      listify<any>(
-        await requestFirst<any[]>([
-          { method: "GET", url: "/api/training-assignments" },
-        ]),
-      ).map(normalizeAssignment),
-    listByUser: async (userId: number) =>
-      listify<any>(
-        await requestFirst<any[]>([
-          { method: "GET", url: `/api/training-assignments/user/${userId}` },
-        ]),
-      ).map(normalizeAssignment),
-    get: async (id: number) =>
-      normalizeAssignment(
-        await requestFirst<any>([
-          { method: "GET", url: `/api/training-assignments/${id}` },
-        ]),
-      ),
-    create: async (payload: Partial<TrainingAssignment>) => {
-      const body = { ...payload, due_date: toIsoDateTime(payload.due_date) };
-      return normalizeAssignment(
-        await requestFirst<any>([
-          {
-            method: "POST",
-            url: "/api/training-assignments/manual",
-            data: body,
-          },
-        ]),
-      );
-    },
-    autoAssign: async (payload: {
-      user_id: number;
-      assigned_by_user_id: number;
-    }) =>
-      listify<any>(
-        await requestFirst<any[]>([
-          {
-            method: "POST",
-            url: "/api/training-assignments/auto",
-            data: payload,
-          },
-        ]),
-      ).map(normalizeAssignment),
-    updateStatus: async (id: number, status: TrainingAssignment["status"]) =>
-      normalizeAssignment(
-        await requestFirst<any>([
-          {
-            method: "PATCH",
-            url: `/api/training-assignments/${id}/status`,
-            data: { status },
-          },
-        ]),
-      ),
+  list: async () =>
+    listify<any>(
+      await requestFirst<any[]>([
+        { method: "GET", url: "/api/training-assignments" },
+      ]),
+    ).map(normalizeAssignment),
+
+  listByUser: async (userId: number) =>
+    listify<any>(
+      await requestFirst<any[]>([
+        { method: "GET", url: `/api/training-assignments/user/${userId}` },
+      ]),
+    ).map(normalizeAssignment),
+
+  get: async (id: number) =>
+    normalizeAssignment(
+      await requestFirst<any>([
+        { method: "GET", url: `/api/training-assignments/${id}` },
+      ]),
+    ),
+
+  create: async (payload: Partial<TrainingAssignment>) => {
+    const body = { ...payload, due_date: toIsoDateTime(payload.due_date) };
+
+    return normalizeAssignment(
+      await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/training-assignments/manual",
+          data: body,
+        },
+      ]),
+    );
   },
+
+  autoAssign: async (payload: {
+    user_id: number;
+    assigned_by_user_id: number;
+  }) =>
+    listify<any>(
+      await requestFirst<any[]>([
+        {
+          method: "POST",
+          url: "/api/training-assignments/auto",
+          data: payload,
+        },
+      ]),
+    ).map(normalizeAssignment),
+
+  updateStatus: async (id: number, status: TrainingAssignment["status"]) =>
+    normalizeAssignment(
+      await requestFirst<any>([
+        {
+          method: "PATCH",
+          url: `/api/training-assignments/${id}/status`,
+          data: { status },
+        },
+      ]),
+    ),
+
+  reactivate: async (id: number) =>
+    normalizeAssignment(
+      await requestFirst<any>([
+        {
+          method: "PATCH",
+          url: `/api/training-assignments/${id}/reactivate`,
+        },
+      ]),
+    ),
+},
 
   moduleProgress: {
     byAssignment: async (assignmentId: number) =>

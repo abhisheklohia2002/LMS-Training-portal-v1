@@ -3,6 +3,7 @@ import {
   DatePicker,
   Drawer,
   Form,
+  Popconfirm,
   Select,
   Space,
   Timeline,
@@ -23,6 +24,8 @@ import { useModuleProgress } from "../../hooks/useModules";
 import { useUsers } from "../../hooks/useUsers";
 import { findCourse, findUser } from "../../utils/lookup";
 import { useRoles } from "../../hooks/useRoles";
+import { useReactivateTrainingAssignment } from "../../hooks/useAttementsReactivate";
+import { useUpdateTrainingAssignmentStatus } from "../../hooks/useTrainingAssignmentStatus";
 function AssignmentTimeline({ id }: { id: number }) {
   const { data } = useModuleProgress(id);
   return (
@@ -40,7 +43,8 @@ export function TrainingAssignmentsPage() {
   const { data, isLoading } = useTrainingAssignments();
   const { data: users } = useUsers();
   const { data: courses } = useCourses();
-
+  const reactivate = useReactivateTrainingAssignment();
+  const updateStatus = useUpdateTrainingAssignmentStatus();
   const create = useCreateTrainingAssignment();
   const update = useUpdateAssignmentStatus();
   const [open, setOpen] = useState(false);
@@ -101,27 +105,76 @@ export function TrainingAssignmentsPage() {
           { title: "Status", render: (_, r) => <StatusTag value={r.status} /> },
           {
             title: "Action",
-            render: (_, r) => (
+            render: (_, r: any) => (
               <Space>
-                <Button
-                  size="small"
-                  onClick={() =>
-                    update.mutate({
-                      id: r.assignment_id,
-                      status: "in_progress",
-                    })
-                  }
-                >
-                  Start
-                </Button>
+                {r.status === "completed" ? (
+                  <Popconfirm
+                    title="Reactivate this training?"
+                    description="This will reopen the learner training and allow retake."
+                    okText="Reactivate"
+                    onConfirm={() =>
+                      reactivate.mutate(r.assignment_id, {
+                        onSuccess: () =>
+                          message.success("Training reactivated"),
+                        onError: (error) =>
+                          message.error(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to reactivate training",
+                          ),
+                      })
+                    }
+                  >
+                    <Button size="small" loading={reactivate.isPending}>
+                      Reactivate
+                    </Button>
+                  </Popconfirm>
+                ) : (
+                  <Button
+                    size="small"
+                    loading={updateStatus.isPending}
+                    onClick={() =>
+                      updateStatus.mutate(
+                        {
+                          id: r.assignment_id,
+                          status: "in_progress",
+                        },
+                        {
+                          onSuccess: () => message.success("Training started"),
+                          onError: (error) =>
+                            message.error(
+                              error instanceof Error
+                                ? error.message
+                                : "Failed to start training",
+                            ),
+                        },
+                      )
+                    }
+                  >
+                    Start
+                  </Button>
+                )}
+
                 <Button
                   size="small"
                   type="primary"
+                  loading={updateStatus.isPending}
                   onClick={() =>
-                    update.mutate({
-                      id: r.assignment_id,
-                      status: "completed",
-                    })
+                    updateStatus.mutate(
+                      {
+                        id: r.assignment_id,
+                        status: "completed",
+                      },
+                      {
+                        onSuccess: () => message.success("Training completed"),
+                        onError: (error) =>
+                          message.error(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to complete training",
+                          ),
+                      },
+                    )
                   }
                 >
                   Complete

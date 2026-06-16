@@ -86,21 +86,6 @@ export function MainLayout() {
         label: "Manage",
         children: [
           {
-            key: "/courses",
-            icon: <BookOutlined />,
-            label: <Link to="/courses">Courses</Link>,
-          },
-          {
-            key: "/users",
-            icon: <TeamOutlined />,
-            label: <Link to="/users">Users</Link>,
-          },
-          {
-            key: "/roles",
-            icon: <UserOutlined />,
-            label: <Link to="/roles">Roles</Link>,
-          },
-          {
             key: "/entity",
             icon: <BuildOutlined />,
             label: <Link to="/entity">Entity</Link>,
@@ -140,6 +125,24 @@ export function MainLayout() {
             ],
           },
           {
+            key: "/users",
+            icon: <TeamOutlined />,
+            label: <Link to="/users">Users</Link>,
+          },
+
+          {
+            key: "/courses",
+            icon: <BookOutlined />,
+            label: <Link to="/courses">Courses</Link>,
+          },
+
+          {
+            key: "/roles",
+            icon: <UserOutlined />,
+            label: <Link to="/roles">Roles</Link>,
+          },
+
+          {
             key: "/assignments",
             icon: <FileTextOutlined />,
             label: <Link to="/assignments">Assignments</Link>,
@@ -178,10 +181,10 @@ export function MainLayout() {
     return roleName;
   };
   useEffect(() => {
-  if (location.pathname.startsWith("/departments")) {
-    setOpenKeys(["/departments-group"]);
-  }
-}, [location.pathname]);
+    if (location.pathname.startsWith("/departments")) {
+      setOpenKeys(["/departments-group"]);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     localStorage.setItem("lms_theme", isDarkMode ? "dark" : "light");

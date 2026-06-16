@@ -70,7 +70,6 @@ function moduleStatus(progress?: ModuleProgress) {
   return "pending";
 }
 
-
 function QuizModal({
   assessment,
   userId,
@@ -136,7 +135,9 @@ function QuizModal({
 
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement && !isSubmittingRef.current) {
-        closeTestForViolation("Test closed because fullscreen mode was exited.");
+        closeTestForViolation(
+          "Test closed because fullscreen mode was exited.",
+        );
       }
     };
 
@@ -211,116 +212,116 @@ function QuizModal({
       },
     );
   };
-if (!open) return null;
+  if (!open) return null;
 
-return (
-  <div
-    ref={quizContainerRef}
-    className="fixed inset-0 z-[9999] flex flex-col bg-white"
-  >
-    {/* Header */}
-    <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
-      <div>
-        <div className="text-xl font-semibold">
-          {assessment?.assessment_title ?? "Assessment"}
+  return (
+    <div
+      ref={quizContainerRef}
+      className="fixed inset-0 z-[9999] flex flex-col bg-white"
+    >
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div>
+          <div className="text-xl font-semibold">
+            {assessment?.assessment_title ?? "Assessment"}
+          </div>
+          <div className="text-sm text-slate-500">
+            Fullscreen test mode is active
+          </div>
         </div>
-        <div className="text-sm text-slate-500">
-          Fullscreen test mode is active
-        </div>
+
+        <Button
+          type="primary"
+          loading={submit.isPending}
+          onClick={() => form.submit()}
+        >
+          Submit quiz
+        </Button>
       </div>
 
-      <Button
-        type="primary"
-        loading={submit.isPending}
-        onClick={() => form.submit()}
-      >
-        Submit quiz
-      </Button>
-    </div>
-
-    {/* Warning */}
-    <div className="shrink-0 px-6 pt-4">
-      <Alert
-        type="warning"
-        showIcon
-        message="Do not exit fullscreen, switch tabs, refresh, or close the browser."
-        description="Leaving the test screen will close your test."
-      />
-    </div>
-
-    {/* Scrollable body */}
-    <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
-      {isLoading ? (
-        <Card loading />
-      ) : questions.length === 0 ? (
+      {/* Warning */}
+      <div className="shrink-0 px-6 pt-4">
         <Alert
           type="warning"
           showIcon
-          message="No questions created for this assessment yet"
+          message="Do not exit fullscreen, switch tabs, refresh, or close the browser."
+          description="Leaving the test screen will close your test."
         />
-      ) : (
-        <Form form={form} layout="vertical" onFinish={submitQuiz}>
-          <div className="space-y-4 pb-24">
-            {questions.map((q, index) => (
-              <Card
-                key={q.question_id}
-                size="small"
-                title={`${index + 1}. ${q.question_text}`}
-                extra={<Tag>{q.marks} marks</Tag>}
-              >
-                <Form.Item
-                  name={`q_${q.question_id}`}
-                  rules={[
-                    {
-                      required: q.question_type !== "text",
-                      message: "Please answer this question",
-                    },
-                  ]}
-                >
-                  {q.question_type === "multiple_choice" ? (
-                    <Checkbox.Group
-                      className="grid gap-2"
-                      options={q.options.map((o) => ({
-                        label: o.option_text,
-                        value: o.option_id,
-                      }))}
-                    />
-                  ) : q.question_type === "text" ? (
-                    <textarea
-                      className="w-full rounded-xl border border-slate-200 p-3"
-                      rows={4}
-                      placeholder="Type your answer"
-                    />
-                  ) : (
-                    <Radio.Group className="grid gap-2">
-                      {q.options.map((o) => (
-                        <Radio key={o.option_id} value={o.option_id}>
-                          {o.option_text}
-                        </Radio>
-                      ))}
-                    </Radio.Group>
-                  )}
-                </Form.Item>
-              </Card>
-            ))}
-          </div>
-        </Form>
-      )}
-    </div>
+      </div>
 
-    {/* Sticky footer */}
-    <div className="flex shrink-0 justify-end border-t border-slate-200 bg-white px-6 py-4">
-      <Button
-        type="primary"
-        size="large"
-        loading={submit.isPending}
-        onClick={() => form.submit()}
-      >
-        Submit quiz
-      </Button>
+      {/* Scrollable body */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+        {isLoading ? (
+          <Card loading />
+        ) : questions.length === 0 ? (
+          <Alert
+            type="warning"
+            showIcon
+            message="No questions created for this assessment yet"
+          />
+        ) : (
+          <Form form={form} layout="vertical" onFinish={submitQuiz}>
+            <div className="space-y-4 pb-24">
+              {questions.map((q, index) => (
+                <Card
+                  key={q.question_id}
+                  size="small"
+                  title={`${index + 1}. ${q.question_text}`}
+                  extra={<Tag>{q.marks} marks</Tag>}
+                >
+                  <Form.Item
+                    name={`q_${q.question_id}`}
+                    rules={[
+                      {
+                        required: q.question_type !== "text",
+                        message: "Please answer this question",
+                      },
+                    ]}
+                  >
+                    {q.question_type === "multiple_choice" ? (
+                      <Checkbox.Group
+                        className="grid gap-2"
+                        options={q.options.map((o) => ({
+                          label: o.option_text,
+                          value: o.option_id,
+                        }))}
+                      />
+                    ) : q.question_type === "text" ? (
+                      <textarea
+                        className="w-full rounded-xl border border-slate-200 p-3"
+                        rows={4}
+                        placeholder="Type your answer"
+                      />
+                    ) : (
+                      <Radio.Group className="grid gap-2">
+                        {q.options.map((o) => (
+                          <Radio key={o.option_id} value={o.option_id}>
+                            {o.option_text}
+                          </Radio>
+                        ))}
+                      </Radio.Group>
+                    )}
+                  </Form.Item>
+                </Card>
+              ))}
+            </div>
+          </Form>
+        )}
+      </div>
+
+      {/* Sticky footer */}
+      <div className="flex shrink-0 justify-end border-t border-slate-200 bg-white px-6 py-4">
+        <Button
+          type="primary"
+          size="large"
+          loading={submit.isPending}
+          onClick={() => form.submit()}
+        >
+          Submit quiz
+        </Button>
+      </div>
     </div>
-  </div>
-);
+  );
   // return (
   //   <Modal
   //     title={assessment?.assessment_title ?? "Assessment"}
@@ -425,7 +426,7 @@ function ModuleLearningItem({
   onStartQuiz,
   onCompleteModule,
   completeLoading,
-  courseId
+  courseId,
 }: {
   progress: ModuleProgress;
   module?: any;
@@ -437,23 +438,50 @@ function ModuleLearningItem({
   onStartQuiz: (quiz: Assessment) => void;
   onCompleteModule: (progressId: number) => void;
   completeLoading: boolean;
-  courseId:number
+  courseId: number;
 }) {
   const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
+
   const documents = Array.isArray(docsRaw)
     ? docsRaw
     : docsRaw?.data || docsRaw?.documents || [];
 
   const pdf = documents?.[0];
+
   const createSession = useCreateTrainingSession();
   const markAttendance = useMark();
+
   const [pdfOpen, setPdfOpen] = useState(false);
+
   const [hasReadPdf, setHasReadPdf] = useState(
     progress.status === "completed" || progress.status === "in_progress",
   );
 
   const canStartQuiz = hasReadPdf || !pdf;
 
+  const getPassingValue = (quiz: Assessment) => {
+    const q: any = quiz;
+
+    return (
+      q.passing_score ??
+      q.passing_marks ??
+      q.passing_percentage ??
+      q.pass_score ??
+      q.pass_marks ??
+      "N/A"
+    );
+  };
+  const getMaxAttempts = (quiz: Assessment) => {
+    return quiz.rule?.max_attempts ?? 1;
+  };
+
+  const getRetakeAllowed = (quiz: Assessment) => {
+    return quiz.rule?.retake_allowed ?? false;
+  };
+
+  const getPassingScore = (quiz: Assessment) => {
+    return quiz.rule?.passing_score ?? quiz.passing_score;
+  };
   const handleFinishedReading = () => {
     const checkIn = new Date();
     const checkOut = new Date(checkIn.getTime() + 60 * 1000);
@@ -493,7 +521,9 @@ function ModuleLearningItem({
                 check_in_time: checkIn.toISOString(),
                 check_out_time: checkOut.toISOString(),
                 attendance_source: "manual",
-                remarks: `Finished reading ${module?.module_title ?? "module PDF"}`,
+                remarks: `Finished reading ${
+                  module?.module_title ?? "module PDF"
+                }`,
               },
             },
             {
@@ -514,6 +544,7 @@ function ModuleLearningItem({
       },
     );
   };
+
   return (
     <>
       <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -522,6 +553,7 @@ function ModuleLearningItem({
             <div className="font-semibold">
               {module?.module_title ?? `Module ${progress.module_id}`}
             </div>
+
             <div className="text-sm text-slate-500">
               Module status: {moduleStatus(progress)}
             </div>
@@ -551,7 +583,7 @@ function ModuleLearningItem({
           </Space>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 grid gap-3">
           {quizzes.length === 0 ? (
             <Tag>No quiz linked</Tag>
           ) : (
@@ -559,32 +591,81 @@ function ModuleLearningItem({
               const passed = hasPassed(quiz.assessment_id);
               const latest = lastAttempt(quiz.assessment_id);
 
+              const maxAttempts = getMaxAttempts(quiz);
+              const retakeAllowed = getRetakeAllowed(quiz);
+              const passingScore = getPassingScore(quiz);
+
+              const usedAttempts = latest?.attempt_no ?? 0;
+              const remainingAttempts = Math.max(maxAttempts - usedAttempts, 0);
+
+              const attemptsFinished = usedAttempts >= maxAttempts;
+
+              const canTakeQuiz =
+                canStartQuiz &&
+                !passed &&
+                !attemptsFinished &&
+                (usedAttempts === 0 || retakeAllowed);
+
+              const statusText = passed
+                ? "Passed"
+                : attemptsFinished
+                  ? "Attempts finished"
+                  : latest
+                    ? "Failed"
+                    : "Not attempted";
+
+              const buttonText = passed
+                ? `Quiz passed: ${quiz.assessment_title}`
+                : !canStartQuiz
+                  ? `Locked: ${quiz.assessment_title}`
+                  : attemptsFinished
+                    ? `Attempts finished: ${quiz.assessment_title}`
+                    : latest
+                      ? `Retake Test: ${quiz.assessment_title}`
+                      : `Start Test: ${quiz.assessment_title}`;
+
               return (
-                <Tooltip
+                <div
                   key={quiz.assessment_id}
-                  title={
-                    latest
-                      ? `Last score: ${latest.score_obtained}, attempt ${latest.attempt_no}`
-                      : canStartQuiz
-                        ? "Ready to start"
-                        : "Read the PDF first"
-                  }
+                  className="rounded-xl border border-slate-200 bg-white p-3"
                 >
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <Tag
+                      color={
+                        passed ? "green" : attemptsFinished ? "red" : "blue"
+                      }
+                    >
+                      {statusText}
+                    </Tag>
+
+                    <Tag>Score: {latest?.score_obtained ?? "N/A"}</Tag>
+
+                    <Tag>Passing: {passingScore}</Tag>
+
+                    <Tag>
+                      Attempts: {usedAttempts}/{maxAttempts}
+                    </Tag>
+
+                    <Tag color={remainingAttempts > 0 ? "green" : "red"}>
+                      Remaining: {remainingAttempts}
+                    </Tag>
+
+                    {!retakeAllowed && usedAttempts > 0 && !passed && (
+                      <Tag color="red">Retake not allowed</Tag>
+                    )}
+                  </div>
+
                   <Button
                     icon={
                       passed ? <FileDoneOutlined /> : <PlayCircleOutlined />
                     }
                     type={passed ? "default" : "primary"}
-                    disabled={passed || !canStartQuiz}
+                    disabled={!canTakeQuiz}
                     onClick={() => onStartQuiz(quiz)}
                   >
-                    {passed
-                      ? `Quiz passed: ${quiz.assessment_title}`
-                      : canStartQuiz
-                        ? `Start Test: ${quiz.assessment_title}`
-                        : `Locked: ${quiz.assessment_title}`}
+                    {buttonText}
                   </Button>
-                </Tooltip>
+                </div>
               );
             })
           )}
@@ -643,7 +724,7 @@ function TrainingCard({
     assignment.course_id,
   );
   const { data: attempts = [] } = useAssessmentAttemptsByUser(userId);
-  console.log(attempts,'attempts------')
+  console.log(attempts, "attempts------");
   const { data: certifications = [] } = useCertificationsByCourse(
     assignment.course_id,
   );
@@ -704,11 +785,34 @@ function TrainingCard({
       (a) => a.is_active && Number(a.module_id) === Number(moduleId),
     );
 
+  const allRequiredQuizzes = progress.flatMap((p) =>
+    moduleAssessments(p.module_id),
+  );
+
+  const allModulesCompleted =
+    progress.length > 0 && progress.every((p) => p.status === "completed");
+
+  const allQuizzesPassed =
+    allRequiredQuizzes.length === 0 ||
+    allRequiredQuizzes.every((quiz) => hasPassed(quiz.assessment_id));
+
+  const canClaimCertificate =
+    Boolean(courseCert) && allModulesCompleted && allQuizzesPassed;
+
   const claimCertificate = () => {
-    if (!courseCert)
+    if (!courseCert) {
       return message.warning(
         "No active certification is configured for this course yet.",
       );
+    }
+
+    if (!allModulesCompleted) {
+      return message.warning("Please complete all modules first.");
+    }
+
+    if (!allQuizzesPassed) {
+      return message.warning("Please pass all required quizzes first.");
+    }
 
     issueCertificate.mutate(
       {
@@ -842,7 +946,7 @@ function TrainingCard({
                 children: (
                   <ModuleLearningItem
                     progress={p}
-                     courseId={assignment.course_id}
+                    courseId={assignment.course_id}
                     sessionId={getSessionForModule(p.module_id)}
                     module={mod}
                     quizzes={quizzes}
@@ -869,14 +973,38 @@ function TrainingCard({
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
             <div>
               <div className="font-semibold">Certificate</div>
+
               <div className="text-sm text-slate-500">
                 {issuedCert
                   ? `Issued: ${issuedCert.certificate_number}`
-                  : assignment.status === "completed"
-                    ? "Course complete. You can claim your certificate."
-                    : "Complete all modules/quizzes to unlock certificate."}
+                  : !courseCert
+                    ? "No active certificate is configured for this course."
+                    : !allModulesCompleted
+                      ? "Complete all modules to unlock certificate."
+                      : !allQuizzesPassed
+                        ? "Pass all required quizzes to unlock certificate."
+                        : "You are eligible. Claim your certificate."}
               </div>
+
+              {!issuedCert && courseCert && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Tag color={allModulesCompleted ? "green" : "orange"}>
+                    Modules: {completed}/{total}
+                  </Tag>
+
+                  <Tag color={allQuizzesPassed ? "green" : "orange"}>
+                    Quizzes passed:{" "}
+                    {
+                      allRequiredQuizzes.filter((quiz) =>
+                        hasPassed(quiz.assessment_id),
+                      ).length
+                    }
+                    /{allRequiredQuizzes.length}
+                  </Tag>
+                </div>
+              )}
             </div>
+
             <Space wrap>
               {issuedCert ? (
                 <Button
@@ -892,7 +1020,7 @@ function TrainingCard({
                 <Button
                   icon={<SafetyCertificateOutlined />}
                   type="primary"
-                  disabled={assignment.status !== "completed" || !courseCert}
+                  disabled={!canClaimCertificate}
                   loading={issueCertificate.isPending}
                   onClick={claimCertificate}
                 >

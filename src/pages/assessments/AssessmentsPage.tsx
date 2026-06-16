@@ -29,6 +29,7 @@ import { PageHeader } from "../../components/common/PageHeader";
 import { StatusTag } from "../../components/common/StatusTag";
 import { useAssessmentAttempts } from "../../hooks/useAssessmentAttempts";
 import {
+  useAssessmentRules,
   useAssessments,
   useCreateAssessment,
   useUpdateAssessment,
@@ -355,18 +356,35 @@ function QuestionsTab({ assessment }: { assessment: Assessment }) {
 }
 
 export function AssessmentsPage() {
-  const { data, isLoading } = useAssessments();
+  // const { data, isLoading } = useAssessments();
+  // const { data: attempts } = useAssessmentAttempts();
+  // const { data: courses } = useCourses();
+  // const { data: modules } = useModules();
+  // const { data: users } = useUsers();
+  // const create = useCreateAssessment();
+  // const [open, setOpen] = useState(false);
+  // const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(
+  //   null,
+  // );
+  // const [form] = Form.useForm();
+   const { data, isLoading } = useAssessments();
   const { data: attempts } = useAssessmentAttempts();
   const { data: courses } = useCourses();
   const { data: modules } = useModules();
   const { data: users } = useUsers();
+
+  const { data: assessmentRules = [], isLoading: rulesLoading } =
+    useAssessmentRules();
+
   const create = useCreateAssessment();
+  const update = useUpdateAssessment();
+
   const [open, setOpen] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(
     null,
   );
   const [form] = Form.useForm();
-  const update = useUpdateAssessment();
+  // const update = useUpdateAssessment();
   const openCreate = () => {
     setEditingAssessment(null);
     form.resetFields();
@@ -374,20 +392,21 @@ export function AssessmentsPage() {
   };
 
   const openEdit = (assessment: Assessment) => {
-    setEditingAssessment(assessment);
+  setEditingAssessment(assessment);
 
-    form.setFieldsValue({
-      course_id: assessment.course_id,
-      module_id: assessment.module_id,
-      assessment_title: assessment.assessment_title,
-      assessment_type: assessment.assessment_type,
-      max_score: assessment.max_score,
-      passing_score: assessment.passing_score,
-      is_active: assessment.is_active,
-    });
+  form.setFieldsValue({
+    course_id: assessment.course_id,
+    module_id: assessment.module_id,
+    assessment_title: assessment.assessment_title,
+    assessment_type: assessment.assessment_type,
+    max_score: assessment.max_score,
+    passing_score: assessment.passing_score,
+    rule_id: assessment.rule_id,
+    is_active: assessment.is_active,
+  });
 
-    setOpen(true);
-  };
+  setOpen(true);
+};
 
   return (
     <>
@@ -445,126 +464,213 @@ export function AssessmentsPage() {
           ),
         }}
         columns={[
-          // { title: "Title", dataIndex: "assessment_title" },
-          {
-            title: "Course",
-            render: (_, r) => findCourse(courses, r.course_id)?.course_title,
-          },
-          {
-            title: "Module",
-            render: (_, r) =>
-              modules?.find((m) => m.module_id === r.module_id)?.module_title,
-          },
-          { title: "Passing", dataIndex: "passing_score" },
-          {
-            title: "Active",
-            render: (_, r) => <StatusTag value={r.is_active} />,
-          },
-
-          {
-            title: "Action",
-            width: 120,
-            render: (_, r: any) => (
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => openEdit(r)}
-              >
-                Edit
-              </Button>
-            ),
-          },
-        ]}
+  {
+    title: "Course",
+    render: (_, r) => findCourse(courses, r.course_id)?.course_title,
+  },
+  {
+    title: "Module",
+    render: (_, r) =>
+      modules?.find((m) => m.module_id === r.module_id)?.module_title,
+  },
+  {
+    title: "Passing",
+    render: (_, r) => r.rule?.passing_score ?? r.passing_score,
+  },
+  {
+    title: "Attempts",
+    render: (_, r) => r.rule?.max_attempts ?? 1,
+  },
+  {
+    title: "Retake",
+    render: (_, r) =>
+      r.rule?.retake_allowed ? (
+        <Tag color="green">Allowed</Tag>
+      ) : (
+        <Tag color="red">Not allowed</Tag>
+      ),
+  },
+  {
+    title: "Active",
+    render: (_, r) => <StatusTag value={r.is_active} />,
+  },
+  {
+    title: "Action",
+    width: 120,
+    render: (_, r: any) => (
+      <Button
+        size="small"
+        icon={<EditOutlined />}
+        onClick={() => openEdit(r)}
+      >
+        Edit
+      </Button>
+    ),
+  },
+]}
       />
       <Drawer
-        open={open}
-        onClose={() => {
+  open={open}
+  onClose={() => {
+    setOpen(false);
+    setEditingAssessment(null);
+    form.resetFields();
+  }}
+  title={editingAssessment ? "Edit assessment" : "Create assessment"}
+  width={520}
+>
+  <Form
+    form={form}
+    layout="vertical"
+    onFinish={(values) => {
+      const payload = {
+        ...values,
+        course_id: Number(values.course_id),
+        module_id: values.module_id ? Number(values.module_id) : null,
+        max_score: Number(values.max_score),
+        passing_score: Number(values.passing_score),
+        rule_id: values.rule_id ? Number(values.rule_id) : null,
+      };
+
+      if (editingAssessment) {
+        update.mutate(
+          {
+            id: editingAssessment.assessment_id,
+            payload,
+          },
+          {
+            onSuccess: () => {
+              message.success("Assessment updated");
+              setOpen(false);
+              setEditingAssessment(null);
+              form.resetFields();
+            },
+          },
+        );
+        return;
+      }
+
+      create.mutate(payload, {
+        onSuccess: () => {
+          message.success("Assessment created");
+          setOpen(false);
+          form.resetFields();
+        },
+      });
+    }}
+  >
+    <Form.Item
+      name="course_id"
+      label="Course"
+      rules={[{ required: true, message: "Please select course" }]}
+    >
+      <Select
+        placeholder="Select course"
+        options={courses?.map((c) => ({
+          label: c.course_title,
+          value: c.course_id,
+        }))}
+      />
+    </Form.Item>
+
+    <Form.Item
+      name="module_id"
+      label="Module"
+      rules={[{ required: true, message: "Please select module" }]}
+    >
+      <Select
+        placeholder="Select module"
+        options={modules?.map((m) => ({
+          label: m.module_title,
+          value: m.module_id,
+        }))}
+      />
+    </Form.Item>
+
+    <Form.Item
+      name="assessment_title"
+      label="Title"
+      rules={[{ required: true, message: "Assessment title is required" }]}
+    >
+      <Input placeholder="Example: Array Quiz" />
+    </Form.Item>
+
+    <Form.Item
+      name="assessment_type"
+      label="Type"
+      rules={[{ required: true, message: "Assessment type is required" }]}
+    >
+      <Select
+        options={[
+          { label: "Quiz", value: "quiz" },
+          { label: "Assignment", value: "assignment" },
+          { label: "Final Test", value: "final_test" },
+        ]}
+      />
+    </Form.Item>
+
+    <Form.Item
+      name="max_score"
+      label="Max score"
+      rules={[{ required: true, message: "Max score is required" }]}
+    >
+      <InputNumber min={1} className="w-full" />
+    </Form.Item>
+
+    <Form.Item
+      name="passing_score"
+      label="Fallback passing score"
+      rules={[{ required: true, message: "Passing score is required" }]}
+      tooltip="Used only if no assessment rule is selected or rule passing score is missing."
+    >
+      <InputNumber min={0} className="w-full" />
+    </Form.Item>
+
+    <Form.Item
+      name="rule_id"
+      label="Assessment Rule"
+      rules={[
+        {
+          required: true,
+          message: "Please select assessment rule",
+        },
+      ]}
+    >
+      <Select
+        loading={rulesLoading}
+        placeholder="Select assessment rule"
+        options={assessmentRules.map((rule: any) => ({
+          label: `${rule.max_attempts} attempts | Passing ${
+            rule.passing_score
+          } | Retake ${rule.retake_allowed ? "Allowed" : "Not allowed"} | ${
+            rule.evaluation_method
+          }`,
+          value: rule.assessment_rule_id,
+        }))}
+      />
+    </Form.Item>
+
+    <Space>
+      <Button
+        type="primary"
+        htmlType="submit"
+        loading={create.isPending || update.isPending}
+      >
+        Save
+      </Button>
+
+      <Button
+        onClick={() => {
           setOpen(false);
           setEditingAssessment(null);
           form.resetFields();
         }}
-        title={editingAssessment ? "Edit assessment" : "Create assessment"}
-        width={520}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => {
-            if (editingAssessment) {
-              update.mutate(
-                {
-                  id: editingAssessment.assessment_id,
-                  payload: values,
-                },
-                {
-                  onSuccess: () => {
-                    message.success("Assessment updated");
-                    setOpen(false);
-                    setEditingAssessment(null);
-                    form.resetFields();
-                  },
-                },
-              );
-              return;
-            }
-
-            create.mutate(values, {
-              onSuccess: () => {
-                message.success("Assessment created");
-                setOpen(false);
-                form.resetFields();
-              },
-            });
-          }}
-        >
-          <Form.Item
-            name="course_id"
-            label="Course"
-            rules={[{ required: true }]}
-          >
-            <Select
-              options={courses?.map((c) => ({
-                label: c.course_title,
-                value: c.course_id,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item name="module_id" label="Module">
-            <Select
-              options={modules?.map((m) => ({
-                label: m.module_title,
-                value: m.module_id,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item
-            name="assessment_title"
-            label="Title"
-            rules={[{ required: false }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item name="assessment_type" label="Type" initialValue="quiz">
-            <Input />
-          </Form.Item>
-          <Form.Item name="max_score" label="Max score" initialValue={100}>
-            <InputNumber className="w-full" />
-          </Form.Item>
-          <Form.Item
-            name="passing_score"
-            label="Passing score"
-            initialValue={70}
-          >
-            <InputNumber className="w-full" />
-          </Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">
-              Save
-            </Button>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
-          </Space>
-        </Form>
-      </Drawer>
+        Cancel
+      </Button>
+    </Space>
+  </Form>
+</Drawer>
     </>
   );
 }
