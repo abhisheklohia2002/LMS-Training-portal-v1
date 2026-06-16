@@ -49,7 +49,13 @@ export function TrainingAssignmentsPage() {
   const update = useUpdateAssignmentStatus();
   const [open, setOpen] = useState(false);
   const { data: roles } = useRoles();
+  const [startingAssignmentId, setStartingAssignmentId] = useState<
+    number | null
+  >(null);
 
+  const [reactivatingAssignmentId, setReactivatingAssignmentId] = useState<
+    number | null
+  >(null);
   const employeeRoleId = 3;
 
   const employeeUsers =
@@ -105,82 +111,80 @@ export function TrainingAssignmentsPage() {
           { title: "Status", render: (_, r) => <StatusTag value={r.status} /> },
           {
             title: "Action",
-            render: (_, r: any) => (
-              <Space>
-                {r.status === "completed" ? (
-                  <Popconfirm
-                    title="Reactivate this training?"
-                    description="This will reopen the learner training and allow retake."
-                    okText="Reactivate"
-                    onConfirm={() =>
-                      reactivate.mutate(r.assignment_id, {
-                        onSuccess: () =>
-                          message.success("Training reactivated"),
-                        onError: (error) =>
-                          message.error(
-                            error instanceof Error
-                              ? error.message
-                              : "Failed to reactivate training",
-                          ),
-                      })
-                    }
-                  >
-                    <Button size="small" loading={reactivate.isPending}>
-                      Reactivate
-                    </Button>
-                  </Popconfirm>
-                ) : (
-                  <Button
-                    size="small"
-                    loading={updateStatus.isPending}
-                    onClick={() =>
-                      updateStatus.mutate(
-                        {
-                          id: r.assignment_id,
-                          status: "in_progress",
-                        },
-                        {
-                          onSuccess: () => message.success("Training started"),
-                          onError: (error) =>
+            width: 220,
+            render: (_, r: any) => {
+              const isStarting = startingAssignmentId === r.assignment_id;
+              const isReactivating =
+                reactivatingAssignmentId === r.assignment_id;
+
+              return (
+                <Space>
+                  {r.status === "completed" ? (
+                    <Popconfirm
+                      title="Reactivate this training?"
+                      description="This will reopen only this learner's training."
+                      okText="Reactivate"
+                      onConfirm={() => {
+                        setReactivatingAssignmentId(r.assignment_id);
+
+                        reactivate.mutate(r.assignment_id, {
+                          onSuccess: () => {
+                            message.success("Training reactivated");
+                          },
+                          onError: (error) => {
                             message.error(
                               error instanceof Error
                                 ? error.message
-                                : "Failed to start training",
-                            ),
-                        },
-                      )
-                    }
-                  >
-                    Start
-                  </Button>
-                )}
+                                : "Failed to reactivate training",
+                            );
+                          },
+                          onSettled: () => {
+                            setReactivatingAssignmentId(null);
+                          },
+                        });
+                      }}
+                    >
+                      <Button size="small" loading={isReactivating}>
+                        Reactivate
+                      </Button>
+                    </Popconfirm>
+                  ) : (
+                    <Button
+                      size="small"
+                      loading={isStarting}
+                      disabled={r.status === "in_progress"}
+                      onClick={() => {
+                        setStartingAssignmentId(r.assignment_id);
 
-                <Button
-                  size="small"
-                  type="primary"
-                  loading={updateStatus.isPending}
-                  onClick={() =>
-                    updateStatus.mutate(
-                      {
-                        id: r.assignment_id,
-                        status: "completed",
-                      },
-                      {
-                        onSuccess: () => message.success("Training completed"),
-                        onError: (error) =>
-                          message.error(
-                            error instanceof Error
-                              ? error.message
-                              : "Failed to complete training",
-                          ),
-                      },
-                    )
-                  }
-                >
-                  Complete
-                </Button>
-              </Space>
-            ),
+                        updateStatus.mutate(
+                          {
+                            id: r.assignment_id,
+                            status: "in_progress",
+                          },
+                          {
+                            onSuccess: () => {
+                              message.success("Training started");
+                            },
+                            onError: (error) => {
+                              message.error(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Failed to start training",
+                              );
+                            },
+                            onSettled: () => {
+                              setStartingAssignmentId(null);
+                            },
+                          },
+                        );
+                      }}
+                    >
+                      {r.status === "in_progress" ? "Started" : "Start"}
+                    </Button>
+                  )}
+                </Space>
+              );
+            },
           },
         ]}
       />
