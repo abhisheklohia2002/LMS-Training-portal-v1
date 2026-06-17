@@ -7,6 +7,7 @@ import {
   FileTextOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  NotificationOutlined,
   ReadOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
@@ -142,30 +143,15 @@ export function MainLayout() {
             label: <Link to="/roles">Roles</Link>,
           },
 
-          // {
-          //   key: "/assignments",
-          //   icon: <FileTextOutlined />,
-          //   label: <Link to="/assignments">Assignments</Link>,
-          // },
-          // {
-          //   key: "/assessments",
-          //   icon: <FileProtectOutlined />,
-          //   label: <Link to="/assessments">Assessments</Link>,
-          // },
-          // {
-          //   key: "/certifications",
-          //   icon: <SafetyCertificateOutlined />,
-          //   label: <Link to="/certifications">Certifications</Link>,
-          // },
-          // {
-          //   key: "/rules",
-          //   icon: <SettingOutlined />,
-          //   label: <Link to="/rules">Rules</Link>,
-          // },
           {
             key: "/notifications",
             icon: <BellOutlined />,
             label: <Link to="/notifications">Notifications</Link>,
+          },
+          {
+            key: "/admin/notifications/create",
+            icon: <NotificationOutlined/>,
+            label: <Link to="/admin/notifications/create">Announcements</Link>,
           },
           {
             key: "/reports",

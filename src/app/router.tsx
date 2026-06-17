@@ -20,6 +20,7 @@ import { DepartmentsPage } from "../pages/departments/DepartmentsPage";
 import { DepartmentMappingsPanel } from "../pages/mappings-deparments/DepartmentMappingsPanel";
 import { DepartmentAssignmentPanel } from "../pages/assignments-departments/DepartmentAssignmentPanel";
 import { EntitiesPage } from "../pages/entity/EntitiesPage";
+import { AdminCreateNotificationPage } from "../pages/adminNotification/AdminCreateNotificationPage";
 
 export const router = createBrowserRouter([
   {
@@ -73,32 +74,19 @@ export const router = createBrowserRouter([
             ],
           },
           {
-             element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
+            children: [{ path: "/entity", element: <EntitiesPage /> }],
+          },
+          { path: "/notifications", element: <NotificationsPage /> },
+          {
+            element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
             children: [
-              { path: "/entity", element: <EntitiesPage /> },
+              {
+                path: "/admin/notifications/create",
+                element: <AdminCreateNotificationPage />,
+              },
             ],
           },
-          // {
-          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-          //   children: [
-          //     { path: "/assignments", element: <TrainingAssignmentsPage /> },
-          //   ],
-          // },
-          // {
-          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-          //   children: [{ path: "/assessments", element: <AssessmentsPage /> }],
-          // },
-          // {
-          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-          //   children: [{ path: "/rules", element: <RulesPage /> }],
-          // },
-          // {
-          //   element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
-          //   children: [
-          //     { path: "/certifications", element: <CertificationsPage /> },
-          //   ],
-          // },
-          { path: "/notifications", element: <NotificationsPage /> },
           {
             element: <ProtectedRoute allowedRoles={["admin", "manager"]} />,
             children: [{ path: "/reports", element: <ReportsPage /> }],
