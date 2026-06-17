@@ -90,7 +90,7 @@ export type Assessment = {
   passing_score: number;
   rule_id?: number;
   is_active: boolean;
-  rule?: AssessmentRule;
+  rule?: any;
 };
 export interface AssessmentAttempt {
   attempt_id: ID;

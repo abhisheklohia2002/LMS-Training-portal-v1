@@ -175,7 +175,7 @@ const normalizeUser = (user: any): User => ({
   ),
   department_id: user.department_id ?? null,
   department: user.department ?? null,
-  role:user.role.role_name ?? null
+  role: user.role.role_name ?? null,
 });
 
 const normalizeCourse = (course: any): Course => ({
@@ -246,8 +246,9 @@ const normalizeAssessmentRule = (row: any): AssessmentRule => ({
   evaluation_method: row?.evaluation_method ?? row?.evaluationMethod ?? "score",
 });
 
-const normalizeAssessment = (row: any): Assessment => ({
-  assessment_id: Number(row?.assessment_id ?? row?.id ?? 0),
+const normalizeAssessment = (row: any): Assessment => {
+      console.log(row,'------------->')
+ return  {assessment_id: Number(row?.assessment_id ?? row?.id ?? 0),
   course_id: Number(row?.course_id ?? row?.courseID ?? 0),
   module_id: row?.module_id ?? row?.moduleID ?? null,
   assessment_title: row?.assessment_title ?? row?.assessmentTitle ?? "",
@@ -258,7 +259,9 @@ const normalizeAssessment = (row: any): Assessment => ({
   ),
   rule_id: row?.rule_id ?? row?.ruleID ?? null,
   is_active: Boolean(row?.is_active ?? row?.isActive ?? true),
-});
+  rule:row?.rule
+,}
+};
 
 const normalizeQuestionOption = (row: any): AssessmentQuestionOption => ({
   option_id: Number(row?.option_id ?? row?.id ?? 0),
@@ -595,80 +598,79 @@ export const api = {
           { method: "POST", url: "/api/training-mappings", data: payload },
         ]),
       ),
-      
   },
 
   assignments: {
-  list: async () =>
-    listify<any>(
-      await requestFirst<any[]>([
-        { method: "GET", url: "/api/training-assignments" },
-      ]),
-    ).map(normalizeAssignment),
+    list: async () =>
+      listify<any>(
+        await requestFirst<any[]>([
+          { method: "GET", url: "/api/training-assignments" },
+        ]),
+      ).map(normalizeAssignment),
 
-  listByUser: async (userId: number) =>
-    listify<any>(
-      await requestFirst<any[]>([
-        { method: "GET", url: `/api/training-assignments/user/${userId}` },
-      ]),
-    ).map(normalizeAssignment),
+    listByUser: async (userId: number) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          { method: "GET", url: `/api/training-assignments/user/${userId}` },
+        ]),
+      ).map(normalizeAssignment),
 
-  get: async (id: number) =>
-    normalizeAssignment(
-      await requestFirst<any>([
-        { method: "GET", url: `/api/training-assignments/${id}` },
-      ]),
-    ),
+    get: async (id: number) =>
+      normalizeAssignment(
+        await requestFirst<any>([
+          { method: "GET", url: `/api/training-assignments/${id}` },
+        ]),
+      ),
 
-  create: async (payload: Partial<TrainingAssignment>) => {
-    const body = { ...payload, due_date: toIsoDateTime(payload.due_date) };
+    create: async (payload: Partial<TrainingAssignment>) => {
+      const body = { ...payload, due_date: toIsoDateTime(payload.due_date) };
 
-    return normalizeAssignment(
-      await requestFirst<any>([
-        {
-          method: "POST",
-          url: "/api/training-assignments/manual",
-          data: body,
-        },
-      ]),
-    );
+      return normalizeAssignment(
+        await requestFirst<any>([
+          {
+            method: "POST",
+            url: "/api/training-assignments/manual",
+            data: body,
+          },
+        ]),
+      );
+    },
+
+    autoAssign: async (payload: {
+      user_id: number;
+      assigned_by_user_id: number;
+    }) =>
+      listify<any>(
+        await requestFirst<any[]>([
+          {
+            method: "POST",
+            url: "/api/training-assignments/auto",
+            data: payload,
+          },
+        ]),
+      ).map(normalizeAssignment),
+
+    updateStatus: async (id: number, status: TrainingAssignment["status"]) =>
+      normalizeAssignment(
+        await requestFirst<any>([
+          {
+            method: "PATCH",
+            url: `/api/training-assignments/${id}/status`,
+            data: { status },
+          },
+        ]),
+      ),
+
+    reactivate: async (id: number) =>
+      normalizeAssignment(
+        await requestFirst<any>([
+          {
+            method: "PATCH",
+            url: `/api/training-assignments/${id}/reactivate`,
+          },
+        ]),
+      ),
   },
-
-  autoAssign: async (payload: {
-    user_id: number;
-    assigned_by_user_id: number;
-  }) =>
-    listify<any>(
-      await requestFirst<any[]>([
-        {
-          method: "POST",
-          url: "/api/training-assignments/auto",
-          data: payload,
-        },
-      ]),
-    ).map(normalizeAssignment),
-
-  updateStatus: async (id: number, status: TrainingAssignment["status"]) =>
-    normalizeAssignment(
-      await requestFirst<any>([
-        {
-          method: "PATCH",
-          url: `/api/training-assignments/${id}/status`,
-          data: { status },
-        },
-      ]),
-    ),
-
-  reactivate: async (id: number) =>
-    normalizeAssignment(
-      await requestFirst<any>([
-        {
-          method: "PATCH",
-          url: `/api/training-assignments/${id}/reactivate`,
-        },
-      ]),
-    ),
-},
 
   moduleProgress: {
     byAssignment: async (assignmentId: number) =>
@@ -865,40 +867,59 @@ export const api = {
   },
 
   certificationRules: {
-    list: async () =>
-      listify<any>(
-        await requestFirst<any[]>([
-          { method: "GET", url: "/api/certification-rules" },
-        ]),
-      ),
+  list: async () =>
+    listify<any>(
+      await requestFirst<any[]>([
+        { method: "GET", url: "/api/certification-rules" },
+      ]),
+    ),
 
-    create: async (payload: any) =>
-      unwrap(
-        await http.post("/api/certification-rules", {
-          ...payload,
-          minimum_score_required: Number(payload.minimum_score_required),
-          validity_days: Number(payload.validity_days),
-        }),
-      ),
+  create: async ({
+    courseId,
+    payload,
+  }: {
+    courseId: number;
+    payload: any;
+  }) =>
+    unwrap(
+      await http.post(`/api/certification-rules/course/${courseId}`, {
+        issue_on_course_completion: Boolean(
+          payload.issue_on_course_completion,
+        ),
+        minimum_score_required: Number(payload.minimum_score_required),
+        validity_days: Number(payload.validity_days),
+        renewal_required: Boolean(payload.renewal_required),
+      }),
+    ),
 
-    update: async (id: number, payload: any) =>
-      unwrap(
-        await http.put(`/api/certification-rules/${id}`, {
-          ...payload,
-          minimum_score_required:
-            payload.minimum_score_required !== undefined
-              ? Number(payload.minimum_score_required)
-              : undefined,
-          validity_days:
-            payload.validity_days !== undefined
-              ? Number(payload.validity_days)
-              : undefined,
-        }),
-      ),
+  update: async (id: number, payload: any) =>
+    unwrap(
+      await http.put(`/api/certification-rules/${id}`, {
+        issue_on_course_completion:
+          payload.issue_on_course_completion !== undefined
+            ? Boolean(payload.issue_on_course_completion)
+            : undefined,
 
-    delete: async (id: number) =>
-      unwrap(await http.delete(`/api/certification-rules/${id}`)),
-  },
+        minimum_score_required:
+          payload.minimum_score_required !== undefined
+            ? Number(payload.minimum_score_required)
+            : undefined,
+
+        validity_days:
+          payload.validity_days !== undefined
+            ? Number(payload.validity_days)
+            : undefined,
+
+        renewal_required:
+          payload.renewal_required !== undefined
+            ? Boolean(payload.renewal_required)
+            : undefined,
+      }),
+    ),
+
+  delete: async (id: number) =>
+    unwrap(await http.delete(`/api/certification-rules/${id}`)),
+},
 
   certifications: {
     list: async () =>
@@ -1110,12 +1131,13 @@ export const api = {
         ]),
       ),
 
-    create: async (payload: any) =>
+    create: async ({ courseId, payload }: { courseId: number; payload: any }) =>
       unwrap(
-        await http.post("/api/assessment-rules", {
-          ...payload,
+        await http.post(`/api/assessment-rules/course/${courseId}`, {
           max_attempts: Number(payload.max_attempts),
           passing_score: Number(payload.passing_score),
+          retake_allowed: Boolean(payload.retake_allowed),
+          evaluation_method: payload.evaluation_method,
         }),
       ),
 

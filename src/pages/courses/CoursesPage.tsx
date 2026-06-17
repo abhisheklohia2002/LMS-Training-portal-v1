@@ -22,144 +22,145 @@ import { useAssessments } from "../../hooks/useAssessments";
 import { useCertifications } from "../../hooks/useCertifications";
 import { useUploadModulePdf } from "../../hooks/useuploadfile";
 import { ModulePdfCell } from "../../components/modulePdfCell/ModulePdfCell";
+import { CourseDetail } from "../../components/course-management/CourseDetail";
 
-function CourseDetail({ courseId }: { courseId: number }) {
-  const { data: mods } = useModules(courseId);
-  const { data: assessments } = useAssessments();
-  const { data: certs } = useCertifications();
-  const createModule = useCreateModule();
-  const uploadModulePdf = useUploadModulePdf(courseId);
-  const [moduleOpen, setModuleOpen] = useState(false);
-  // console.log(mods,'mods')
-  return (
-    <>
-      <Tabs
-        items={[
-          {
-            key: "modules",
-            label: "Modules",
-            children: (
-              <div>
-                <div className="mb-3 flex justify-end">
-                  <Button type="primary" onClick={() => setModuleOpen(true)}>
-                    Add module
-                  </Button>
-                </div>
-                <DataTable
-                  dataSource={mods}
-                  columns={[
-                    { title: "Seq", dataIndex: "sequence_no" },
-                    { title: "Title", dataIndex: "module_title" },
-                    { title: "Due days", dataIndex: "due_days" },
-                    {
-                      title: "Active",
-                      render: (_, r) => <StatusTag value={r.is_active} />,
-                    },
-                    {
-                      title: "PDF",
-                      render: (_: any, r: any) => (
-                        <ModulePdfCell
-                          moduleId={r.module_id}
-                          moduleTitle={r.module_title}
-                          courseId={courseId}
-                        />
-                      ),
-                    },
-                  ]}
-                />
-              </div>
-            ),
-          },
-          {
-            key: "assessments",
-            label: "Assessments",
-            children: (
-              <DataTable
-                dataSource={assessments?.filter(
-                  (a) => a.course_id === courseId,
-                )}
-                columns={[
-                  { title: "Title", dataIndex: "assessment_title" },
-                  { title: "Passing", dataIndex: "passing_score" },
-                ]}
-              />
-            ),
-          },
-          {
-            key: "certs",
-            label: "Certifications",
-            children: (
-              <DataTable
-                dataSource={certs?.filter((c) => c.course_id === courseId)}
-                columns={[
-                  { title: "Name", dataIndex: "certification_name" },
-                  { title: "Validity", dataIndex: "validity_days" },
-                ]}
-              />
-            ),
-          },
-        ]}
-      />
-      <Drawer
-        open={moduleOpen}
-        onClose={() => setModuleOpen(false)}
-        title="Add module"
-        width={520}
-      >
-        <Form
-          layout="vertical"
-          initialValues={{ course_id: courseId, is_active: true }}
-          onFinish={(v) =>
-            createModule.mutate(
-              { ...v, course_id: courseId },
-              {
-                onSuccess: () => {
-                  message.success("Module created");
-                  setModuleOpen(false);
-                },
-              },
-            )
-          }
-        >
-          <Form.Item
-            name="module_title"
-            label="Module title"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item name="module_description" label="Description">
-            <Input.TextArea />
-          </Form.Item>
-          <Form.Item
-            name="sequence_no"
-            label="Sequence no"
-            rules={[{ required: true }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item name="due_days" label="Due days" initialValue={2}>
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item name="is_active" label="Active" initialValue={true}>
-            <Select
-              options={[
-                { label: "Active", value: true },
-                { label: "Inactive", value: false },
-              ]}
-            />
-          </Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">
-              Save module
-            </Button>
-            <Button onClick={() => setModuleOpen(false)}>Cancel</Button>
-          </Space>
-        </Form>
-      </Drawer>
-    </>
-  );
-}
+// function CourseDetail({ courseId }: { courseId: number }) {
+//   const { data: mods } = useModules(courseId);
+//   const { data: assessments } = useAssessments();
+//   const { data: certs } = useCertifications();
+//   const createModule = useCreateModule();
+//   const uploadModulePdf = useUploadModulePdf(courseId);
+//   const [moduleOpen, setModuleOpen] = useState(false);
+//   // console.log(mods,'mods')
+//   return (
+//     <>
+//       <Tabs
+//         items={[
+//           {
+//             key: "modules",
+//             label: "Modules",
+//             children: (
+//               <div>
+//                 <div className="mb-3 flex justify-end">
+//                   <Button type="primary" onClick={() => setModuleOpen(true)}>
+//                     Add module
+//                   </Button>
+//                 </div>
+//                 <DataTable
+//                   dataSource={mods}
+//                   columns={[
+//                     { title: "Seq", dataIndex: "sequence_no" },
+//                     { title: "Title", dataIndex: "module_title" },
+//                     { title: "Due days", dataIndex: "due_days" },
+//                     {
+//                       title: "Active",
+//                       render: (_, r) => <StatusTag value={r.is_active} />,
+//                     },
+//                     {
+//                       title: "PDF",
+//                       render: (_: any, r: any) => (
+//                         <ModulePdfCell
+//                           moduleId={r.module_id}
+//                           moduleTitle={r.module_title}
+//                           courseId={courseId}
+//                         />
+//                       ),
+//                     },
+//                   ]}
+//                 />
+//               </div>
+//             ),
+//           },
+//           {
+//             key: "assessments",
+//             label: "Assessments",
+//             children: (
+//               <DataTable
+//                 dataSource={assessments?.filter(
+//                   (a) => a.course_id === courseId,
+//                 )}
+//                 columns={[
+//                   { title: "Title", dataIndex: "assessment_title" },
+//                   { title: "Passing", dataIndex: "passing_score" },
+//                 ]}
+//               />
+//             ),
+//           },
+//           {
+//             key: "certs",
+//             label: "Certifications",
+//             children: (
+//               <DataTable
+//                 dataSource={certs?.filter((c) => c.course_id === courseId)}
+//                 columns={[
+//                   { title: "Name", dataIndex: "certification_name" },
+//                   { title: "Validity", dataIndex: "validity_days" },
+//                 ]}
+//               />
+//             ),
+//           },
+//         ]}
+//       />
+//       <Drawer
+//         open={moduleOpen}
+//         onClose={() => setModuleOpen(false)}
+//         title="Add module"
+//         width={520}
+//       >
+//         <Form
+//           layout="vertical"
+//           initialValues={{ course_id: courseId, is_active: true }}
+//           onFinish={(v) =>
+//             createModule.mutate(
+//               { ...v, course_id: courseId },
+//               {
+//                 onSuccess: () => {
+//                   message.success("Module created");
+//                   setModuleOpen(false);
+//                 },
+//               },
+//             )
+//           }
+//         >
+//           <Form.Item
+//             name="module_title"
+//             label="Module title"
+//             rules={[{ required: true }]}
+//           >
+//             <Input />
+//           </Form.Item>
+//           <Form.Item name="module_description" label="Description">
+//             <Input.TextArea />
+//           </Form.Item>
+//           <Form.Item
+//             name="sequence_no"
+//             label="Sequence no"
+//             rules={[{ required: true }]}
+//           >
+//             <Input type="number" />
+//           </Form.Item>
+//           <Form.Item name="due_days" label="Due days" initialValue={2}>
+//             <Input type="number" />
+//           </Form.Item>
+//           <Form.Item name="is_active" label="Active" initialValue={true}>
+//             <Select
+//               options={[
+//                 { label: "Active", value: true },
+//                 { label: "Inactive", value: false },
+//               ]}
+//             />
+//           </Form.Item>
+//           <Space>
+//             <Button type="primary" htmlType="submit">
+//               Save module
+//             </Button>
+//             <Button onClick={() => setModuleOpen(false)}>Cancel</Button>
+//           </Space>
+//         </Form>
+//       </Drawer>
+//     </>
+//   );
+// }
 export function CoursesPage() {
   const { data, isLoading } = useCourses();
   const create = useCreateCourse();

@@ -356,17 +356,6 @@ function QuestionsTab({ assessment }: { assessment: Assessment }) {
 }
 
 export function AssessmentsPage() {
-  // const { data, isLoading } = useAssessments();
-  // const { data: attempts } = useAssessmentAttempts();
-  // const { data: courses } = useCourses();
-  // const { data: modules } = useModules();
-  // const { data: users } = useUsers();
-  // const create = useCreateAssessment();
-  // const [open, setOpen] = useState(false);
-  // const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(
-  //   null,
-  // );
-  // const [form] = Form.useForm();
    const { data, isLoading } = useAssessments();
   const { data: attempts } = useAssessmentAttempts();
   const { data: courses } = useCourses();
