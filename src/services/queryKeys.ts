@@ -7,10 +7,12 @@ export const queryKeys = {
   modules: (courseId?: string | number) =>
     ["modules", courseId ? String(courseId) : "all"] as const,
   mappings: ["training-mappings"] as const,
+
   assignments: ["assignments"] as const,
   assignmentsByUser: (userId: string | number) =>
     ["assignments", "user", String(userId)] as const,
   assignment: (id: string | number) => ["assignments", String(id)] as const,
+  
   assessments: ["assessments"] as const,
   assessmentsByCourse: (courseId: string | number) =>
     ["assessments", "course", String(courseId)] as const,
@@ -33,9 +35,11 @@ export const queryKeys = {
   assignmentRules: ["assignment-rules"] as const,
   assessmentRules: ["assessment-rules"] as const,
   certificationRules: ["certification-rules"] as const,
+  
   departmentTrainingMappings: ["department-training-mappings"] as const,
 departmentTrainingMappingsByDepartment: (departmentId: number) =>
   ["department-training-mappings", departmentId] as const,
 trainingAssignments: ["training-assignments"] as const,
 departmentAssignments: ["department-assignments"] as const,
+
 };
