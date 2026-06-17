@@ -329,18 +329,69 @@ const normalizeCertificateIssue = (row: any): CertificateIssue => ({
   pdf_path: row?.pdf_path ?? row?.PDFPath ?? "",
 });
 
-const normalizeNotification = (row: any): Notification => ({
-  notification_id: Number(row?.notification_id ?? row?.id ?? 0),
-  user_id: Number(row?.user_id ?? row?.userID ?? 0),
-  assignment_id: row?.assignment_id ?? row?.assignmentID ?? null,
-  certificate_issue_id:
-    row?.certificate_issue_id ?? row?.certificateIssueID ?? null,
-  notification_type: row?.notification_type ?? row?.notificationType ?? "",
-  message: row?.message ?? "",
-  target_audience: row?.target_audience ?? row?.targetAudience ?? "",
-  sent_at: row?.sent_at ?? row?.sentAt ?? "",
-  read_status: Boolean(row?.read_status ?? row?.readStatus ?? false),
-});
+const normalizeNotification = (row: any): Notification => {
+  const notification = row?.notification ?? row;
+
+  return {
+    notification_id: Number(
+      row?.notification_id ??
+        notification?.notification_id ??
+        notification?.id ??
+        row?.id ??
+        0,
+    ),
+
+    user_id: Number(row?.user_id ?? row?.userID ?? 0),
+
+    assignment_id:
+      notification?.assignment_id ??
+      notification?.assignmentID ??
+      row?.assignment_id ??
+      row?.assignmentID ??
+      null,
+
+    certificate_issue_id:
+      notification?.certificate_issue_id ??
+      notification?.certificateIssueID ??
+      row?.certificate_issue_id ??
+      row?.certificateIssueID ??
+      null,
+
+    notification_type:
+      notification?.notification_type ??
+      notification?.notificationType ??
+      row?.notification_type ??
+      row?.notificationType ??
+      "",
+
+    title: notification?.title ?? row?.title ?? "",
+
+    message: notification?.message ?? row?.message ?? "",
+
+    target_audience:
+      notification?.target_audience ??
+      notification?.targetAudience ??
+      row?.target_audience ??
+      row?.targetAudience ??
+      "",
+
+    sent_at:
+      notification?.sent_at ??
+      notification?.sentAt ??
+      row?.sent_at ??
+      row?.sentAt ??
+      "",
+
+    created_at:
+      notification?.created_at ??
+      notification?.createdAt ??
+      row?.created_at ??
+      row?.createdAt ??
+      "",
+
+    read_status: Boolean(row?.read_status ?? row?.readStatus ?? false),
+  };
+};
 
 const currentUserRole = async () => {
   try {
@@ -1059,31 +1110,52 @@ export const api = {
       ]),
   },
 
+  
   notifications: {
-    list: async () => {
-      try {
-        return listify<any>(
-          await requestFirst<any[]>([
-            { method: "GET", url: "/api/notifications" },
-          ]),
-        ).map(normalizeNotification);
-      } catch (error) {
-        if (isNotFound(error)) return [];
-        throw error;
-      }
-    },
-    markRead: async (id: number) =>
-      normalizeNotification(
-        await requestFirst<any>([
-          { method: "PATCH", url: `/api/notifications/${id}/read` },
-          {
-            method: "PATCH",
-            url: `/api/notifications/${id}`,
-            data: { read_status: true },
-          },
-        ]),
-      ),
+  list: async () => {
+    try {
+      const res = await requestFirst<any>([
+        { method: "GET", url: "/api/notifications" },
+      ]);
+
+      return listify<any>(res.notifications ?? res).map(normalizeNotification);
+    } catch (error) {
+      if (isNotFound(error)) return [];
+      throw error;
+    }
   },
+
+  markRead: async (id: number) => {
+    await requestFirst<any>([
+      { method: "PATCH", url: `/api/notifications/${id}/read` },
+      {
+        method: "PATCH",
+        url: `/api/notifications/${id}`,
+        data: { read_status: true },
+      },
+    ]);
+
+    return true;
+  },
+
+  create: async (payload: {
+    notification_type: string;
+    title?: string;
+    message: string;
+    target_audience: string;
+    user_ids?: number[];
+  }) => {
+    const res = await requestFirst<any>([
+      {
+        method: "POST",
+        url: "/api/admin/notifications",
+        data: payload,
+      },
+    ]);
+
+    return normalizeNotification(res.notification ?? res);
+  },
+},
 
   reports: {
     summary: async () => {

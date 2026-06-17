@@ -185,17 +185,6 @@ export interface CertificateIssue {
   issue_status: CertificateStatus;
   pdf_path?: string;
 }
-export interface Notification {
-  notification_id: ID;
-  user_id: ID;
-  assignment_id?: ID | null;
-  certificate_issue_id?: ID | null;
-  notification_type: string;
-  message: string;
-  target_audience: string;
-  sent_at: string;
-  read_status: boolean;
-}
 export interface ReportSummary {
   label: string;
   value: number;
@@ -252,6 +241,47 @@ export type CreateEntityPayload = {
   entity_type?: string;
   description?: string;
   is_active: boolean;
+};
+
+
+export type Notification = {
+  notification_id: number;
+  user_id: number;
+
+  assignment_id?: number | null;
+  certificate_issue_id?: number | null;
+
+  notification_type: string;
+  title?: string;
+  message: string;
+  target_audience: string;
+
+  sent_at?: string | null;
+  created_at?: string | null;
+
+  read_status: boolean;
+};
+
+export type NotificationRecipient = {
+  id: number;
+  notification_id: number;
+  user_id: any;
+  read_status: boolean;
+  read_at?: string | null;
+  delivered_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  notification: Notification;
+};
+
+export type CreateNotificationPayload = {
+  notification_type: string;
+  title?: string;
+  message: string;
+  target_audience: "all" | "user" | "role" | "department";
+  user_ids?: number[];
+  assignment_id?: number;
+  certificate_issue_id?: number;
 };
 
 export type UpdateEntityPayload = CreateEntityPayload;
