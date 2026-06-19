@@ -573,27 +573,36 @@ export const api = {
   },
 
   uploadModulePdf: async (
-    moduleId: number,
-    file: File,
-    title?: string,
-    publicId?: string,
-  ) => {
-    const formData = new FormData();
+  moduleId: number,
+  file: File,
+  thumbnail: File,
+  title?: string,
+  publicId?: string,
+  oldThumbnailPublicId?: string,
+) => {
+  const formData = new FormData();
 
-    formData.append("module_id", String(moduleId));
-    formData.append("title", title || "");
-    formData.append("file", file);
-    if (publicId) {
-      formData.append("publicId", publicId);
-    }
-    return await requestFirst<any>([
-      {
-        method: "POST",
-        url: "/api/module-documents/upload",
-        data: formData,
-      },
-    ]);
-  },
+  formData.append("module_id", String(moduleId));
+  formData.append("title", title || "");
+  formData.append("file", file);
+  formData.append("thumbnail", thumbnail);
+
+  if (publicId) {
+    formData.append("publicId", publicId);
+  }
+
+  if (oldThumbnailPublicId) {
+    formData.append("oldThumbnailPublicId", oldThumbnailPublicId);
+  }
+
+  return await requestFirst<any>([
+    {
+      method: "POST",
+      url: "/api/module-documents/upload",
+      data: formData,
+    },
+  ]);
+},
   getModuleDocuments: async (moduleId: number) => {
     return await requestFirst<any>([
       {
