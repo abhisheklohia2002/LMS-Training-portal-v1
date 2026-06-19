@@ -16,14 +16,26 @@ export function useUploadModulePdf(courseId: number) {
     mutationFn: ({
       moduleId,
       file,
+      thumbnail,
       title,
       publicId,
+      oldThumbnailPublicId,
     }: {
       moduleId: number;
       file: File;
+      thumbnail: File;
       title?: string;
-      publicId?:string;
-    }) => api.uploadModulePdf(moduleId, file, title,publicId),
+      publicId?: string;
+      oldThumbnailPublicId?: string;
+    }) =>
+      api.uploadModulePdf(
+        moduleId,
+        file,
+        thumbnail,
+        title,
+        publicId,
+        oldThumbnailPublicId,
+      ),
 
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
