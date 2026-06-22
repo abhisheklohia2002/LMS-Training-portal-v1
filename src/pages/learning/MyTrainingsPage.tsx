@@ -60,7 +60,10 @@ import {
   useAttendanceSummary,
   useMark,
 } from "../../hooks/useAttendance";
-import { useModuleDocuments } from "../../hooks/useModuleDocuments";
+import {
+  useModuleDocuments,
+  useModuleVideo,
+} from "../../hooks/useModuleDocuments";
 import { useCreateTrainingSession } from "../../hooks/useTrainingSessionsByCourse";
 
 function moduleStatus(progress?: ModuleProgress) {
@@ -441,7 +444,9 @@ function ModuleLearningItem({
   courseId: number;
 }) {
   const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
+  const { data: videoData } = useModuleVideo(progress.module_id);
 
+  const moduleVideo = videoData?.video || null;
   const documents = Array.isArray(docsRaw)
     ? docsRaw
     : docsRaw?.data || docsRaw?.documents || [];
@@ -557,6 +562,31 @@ function ModuleLearningItem({
             <div className="text-sm text-slate-500">
               Module status: {moduleStatus(progress)}
             </div>
+            {moduleVideo?.video_url && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="font-medium">Module Video</div>
+                  <Tag color="purple">Video available</Tag>
+                </div>
+
+                <video
+                  src={moduleVideo.video_url}
+                  poster={pdf?.thumbnail_url}
+                  controls
+                  className="w-full rounded-xl bg-black"
+                  style={{
+                    maxHeight: 420,
+                    objectFit: "contain",
+                  }}
+                />
+
+                {!pdf?.thumbnail_url && (
+                  <div className="mt-2 text-xs text-slate-400">
+                    No thumbnail uploaded for this module.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <Space wrap>
@@ -566,6 +596,12 @@ function ModuleLearningItem({
               </Button>
             ) : (
               <Tag color="orange">No PDF uploaded</Tag>
+            )}
+
+            {moduleVideo?.video_url ? (
+              <Tag color="purple">Video uploaded</Tag>
+            ) : (
+              <Tag color="orange">No video uploaded</Tag>
             )}
 
             <Button
@@ -724,16 +760,16 @@ function TrainingCard({
     assignment.course_id,
   );
   const { data: attempts = [] } = useAssessmentAttemptsByUser(userId);
-  console.log(attempts, "attempts------");
   const { data: certifications = [] } = useCertificationsByCourse(
     assignment.course_id,
   );
   const { data: certificateIssues = [] } = useCertificateIssuesByUser(userId);
   const { data: attendance = [] } = useAttendanceByUser(userId);
-  const { data: attendanceSummary } = useAttendanceSummary(
-    userId,
-    assignment.course_id,
-  );
+  // const { data: attendanceSummary } = useAttendanceSummary(
+    //   userId,
+    //   assignment.course_id,
+    // );
+    console.log(attendance, "attendance------");
   const complete = useCompleteModule();
   const issueCertificate = useIssueCertificate();
   const { data: sessions } = useCreateTrainingSession();

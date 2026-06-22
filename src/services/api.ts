@@ -247,20 +247,21 @@ const normalizeAssessmentRule = (row: any): AssessmentRule => ({
 });
 
 const normalizeAssessment = (row: any): Assessment => {
-      console.log(row,'------------->')
- return  {assessment_id: Number(row?.assessment_id ?? row?.id ?? 0),
-  course_id: Number(row?.course_id ?? row?.courseID ?? 0),
-  module_id: row?.module_id ?? row?.moduleID ?? null,
-  assessment_title: row?.assessment_title ?? row?.assessmentTitle ?? "",
-  assessment_type: row?.assessment_type ?? row?.assessmentType ?? "",
-  max_score: Number(row?.max_score ?? row?.maxScore ?? 0),
-  passing_score: Number(
-    row?.passing_score ?? row?.passingScore ?? row?.rule?.passing_score ?? 0,
-  ),
-  rule_id: row?.rule_id ?? row?.ruleID ?? null,
-  is_active: Boolean(row?.is_active ?? row?.isActive ?? true),
-  rule:row?.rule
-,}
+  console.log(row, "------------->");
+  return {
+    assessment_id: Number(row?.assessment_id ?? row?.id ?? 0),
+    course_id: Number(row?.course_id ?? row?.courseID ?? 0),
+    module_id: row?.module_id ?? row?.moduleID ?? null,
+    assessment_title: row?.assessment_title ?? row?.assessmentTitle ?? "",
+    assessment_type: row?.assessment_type ?? row?.assessmentType ?? "",
+    max_score: Number(row?.max_score ?? row?.maxScore ?? 0),
+    passing_score: Number(
+      row?.passing_score ?? row?.passingScore ?? row?.rule?.passing_score ?? 0,
+    ),
+    rule_id: row?.rule_id ?? row?.ruleID ?? null,
+    is_active: Boolean(row?.is_active ?? row?.isActive ?? true),
+    rule: row?.rule,
+  };
 };
 
 const normalizeQuestionOption = (row: any): AssessmentQuestionOption => ({
@@ -572,34 +573,94 @@ export const api = {
       ),
   },
 
-  uploadModulePdf: async (
-  moduleId: number,
-  file: File,
-  thumbnail: File,
-  title?: string,
-  publicId?: string,
-  oldThumbnailPublicId?: string,
-) => {
+  uploadModulePdf: async ({
+    moduleId,
+    file,
+    thumbnail,
+    title,
+    publicId,
+    oldThumbnailPublicId,
+  }: {
+    moduleId: number;
+    file: File;
+    thumbnail: File;
+    title?: string;
+    publicId?: string;
+    oldThumbnailPublicId?: string;
+  }) => {
+    const formData = new FormData();
+
+    formData.append("module_id", String(moduleId));
+    formData.append("title", title || "");
+    formData.append("file", file);
+    formData.append("thumbnail", thumbnail);
+
+    if (publicId) {
+      formData.append("publicId", publicId);
+    }
+
+    if (oldThumbnailPublicId) {
+      formData.append("oldThumbnailPublicId", oldThumbnailPublicId);
+    }
+
+    return await requestFirst<any>([
+      {
+        method: "POST",
+        url: "/api/module-documents/upload",
+        data: formData,
+      },
+    ]);
+  },
+ 
+ uploadModuleVideo: async ({
+  courseId,
+  moduleId,
+  video,
+  title,
+  oldVideoPublicId,
+  onProgress,
+}: {
+  courseId: number;
+  moduleId: number;
+  video: File;
+  title?: string;
+  oldVideoPublicId?: string;
+  onProgress?: (percent: number) => void;
+}) => {
   const formData = new FormData();
 
-  formData.append("module_id", String(moduleId));
+  formData.append("course_id", String(courseId));
   formData.append("title", title || "");
-  formData.append("file", file);
-  formData.append("thumbnail", thumbnail);
+  formData.append("video", video);
 
-  if (publicId) {
-    formData.append("publicId", publicId);
-  }
-
-  if (oldThumbnailPublicId) {
-    formData.append("oldThumbnailPublicId", oldThumbnailPublicId);
+  if (oldVideoPublicId) {
+    formData.append("oldVideoPublicId", oldVideoPublicId);
   }
 
   return await requestFirst<any>([
+  {
+    method: "POST",
+    url: `/api/module-documents/${moduleId}/video`,
+    data: formData,
+    timeout: 15 * 60 * 1000,
+    onUploadProgress: (progressEvent) => {
+      if (!progressEvent.total) return;
+
+      const percent = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total,
+      );
+
+      onProgress?.(percent);
+    },
+  },
+]);
+},
+
+  getModuleVideo: async (moduleId: number) => {
+  return await requestFirst<any>([
     {
-      method: "POST",
-      url: "/api/module-documents/upload",
-      data: formData,
+      method: "GET",
+      url: `/api/module-documents/${moduleId}/video`,
     },
   ]);
 },
@@ -927,59 +988,53 @@ export const api = {
   },
 
   certificationRules: {
-  list: async () =>
-    listify<any>(
-      await requestFirst<any[]>([
-        { method: "GET", url: "/api/certification-rules" },
-      ]),
-    ),
+    list: async () =>
+      listify<any>(
+        await requestFirst<any[]>([
+          { method: "GET", url: "/api/certification-rules" },
+        ]),
+      ),
 
-  create: async ({
-    courseId,
-    payload,
-  }: {
-    courseId: number;
-    payload: any;
-  }) =>
-    unwrap(
-      await http.post(`/api/certification-rules/course/${courseId}`, {
-        issue_on_course_completion: Boolean(
-          payload.issue_on_course_completion,
-        ),
-        minimum_score_required: Number(payload.minimum_score_required),
-        validity_days: Number(payload.validity_days),
-        renewal_required: Boolean(payload.renewal_required),
-      }),
-    ),
+    create: async ({ courseId, payload }: { courseId: number; payload: any }) =>
+      unwrap(
+        await http.post(`/api/certification-rules/course/${courseId}`, {
+          issue_on_course_completion: Boolean(
+            payload.issue_on_course_completion,
+          ),
+          minimum_score_required: Number(payload.minimum_score_required),
+          validity_days: Number(payload.validity_days),
+          renewal_required: Boolean(payload.renewal_required),
+        }),
+      ),
 
-  update: async (id: number, payload: any) =>
-    unwrap(
-      await http.put(`/api/certification-rules/${id}`, {
-        issue_on_course_completion:
-          payload.issue_on_course_completion !== undefined
-            ? Boolean(payload.issue_on_course_completion)
-            : undefined,
+    update: async (id: number, payload: any) =>
+      unwrap(
+        await http.put(`/api/certification-rules/${id}`, {
+          issue_on_course_completion:
+            payload.issue_on_course_completion !== undefined
+              ? Boolean(payload.issue_on_course_completion)
+              : undefined,
 
-        minimum_score_required:
-          payload.minimum_score_required !== undefined
-            ? Number(payload.minimum_score_required)
-            : undefined,
+          minimum_score_required:
+            payload.minimum_score_required !== undefined
+              ? Number(payload.minimum_score_required)
+              : undefined,
 
-        validity_days:
-          payload.validity_days !== undefined
-            ? Number(payload.validity_days)
-            : undefined,
+          validity_days:
+            payload.validity_days !== undefined
+              ? Number(payload.validity_days)
+              : undefined,
 
-        renewal_required:
-          payload.renewal_required !== undefined
-            ? Boolean(payload.renewal_required)
-            : undefined,
-      }),
-    ),
+          renewal_required:
+            payload.renewal_required !== undefined
+              ? Boolean(payload.renewal_required)
+              : undefined,
+        }),
+      ),
 
-  delete: async (id: number) =>
-    unwrap(await http.delete(`/api/certification-rules/${id}`)),
-},
+    delete: async (id: number) =>
+      unwrap(await http.delete(`/api/certification-rules/${id}`)),
+  },
 
   certifications: {
     list: async () =>
@@ -1119,52 +1174,53 @@ export const api = {
       ]),
   },
 
-  
   notifications: {
-  list: async () => {
-    try {
-      const res = await requestFirst<any>([
-        { method: "GET", url: "/api/notifications" },
+    list: async () => {
+      try {
+        const res = await requestFirst<any>([
+          { method: "GET", url: "/api/notifications" },
+        ]);
+
+        return listify<any>(res.notifications ?? res).map(
+          normalizeNotification,
+        );
+      } catch (error) {
+        if (isNotFound(error)) return [];
+        throw error;
+      }
+    },
+
+    markRead: async (id: number) => {
+      await requestFirst<any>([
+        { method: "PATCH", url: `/api/notifications/${id}/read` },
+        {
+          method: "PATCH",
+          url: `/api/notifications/${id}`,
+          data: { read_status: true },
+        },
       ]);
 
-      return listify<any>(res.notifications ?? res).map(normalizeNotification);
-    } catch (error) {
-      if (isNotFound(error)) return [];
-      throw error;
-    }
+      return true;
+    },
+
+    create: async (payload: {
+      notification_type: string;
+      title?: string;
+      message: string;
+      target_audience: string;
+      user_ids?: number[];
+    }) => {
+      const res = await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/admin/notifications",
+          data: payload,
+        },
+      ]);
+
+      return normalizeNotification(res.notification ?? res);
+    },
   },
-
-  markRead: async (id: number) => {
-    await requestFirst<any>([
-      { method: "PATCH", url: `/api/notifications/${id}/read` },
-      {
-        method: "PATCH",
-        url: `/api/notifications/${id}`,
-        data: { read_status: true },
-      },
-    ]);
-
-    return true;
-  },
-
-  create: async (payload: {
-    notification_type: string;
-    title?: string;
-    message: string;
-    target_audience: string;
-    user_ids?: number[];
-  }) => {
-    const res = await requestFirst<any>([
-      {
-        method: "POST",
-        url: "/api/admin/notifications",
-        data: payload,
-      },
-    ]);
-
-    return normalizeNotification(res.notification ?? res);
-  },
-},
 
   reports: {
     summary: async () => {

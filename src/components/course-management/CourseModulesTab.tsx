@@ -34,7 +34,7 @@ export function CourseModulesTab({ courseId }: Props) {
             render: (_, record: any) => <StatusTag value={record.is_active} />,
           },
           {
-            title: "PDF",
+            title: "PDF / Thumbnail / Video",
             render: (_: any, record: any) => (
               <ModulePdfCell
                 moduleId={record.module_id}

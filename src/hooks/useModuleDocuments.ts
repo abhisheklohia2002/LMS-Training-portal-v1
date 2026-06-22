@@ -28,14 +28,14 @@ export function useUploadModulePdf(courseId: number) {
       publicId?: string;
       oldThumbnailPublicId?: string;
     }) =>
-      api.uploadModulePdf(
+      api.uploadModulePdf({
         moduleId,
         file,
         thumbnail,
         title,
         publicId,
         oldThumbnailPublicId,
-      ),
+      }),
 
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -48,3 +48,38 @@ export function useUploadModulePdf(courseId: number) {
     },
   });
 }
+
+export function useUploadModuleVideo(courseId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.uploadModuleVideo,
+
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["module-video", variables.moduleId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["module-documents", variables.moduleId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["modules", courseId],
+      });
+    },
+  });
+}
+
+export function useModuleVideo(moduleId: number) {
+  return useQuery({
+    queryKey: ["module-video", moduleId],
+    queryFn: () => api.getModuleVideo(moduleId),
+    enabled: !!moduleId,
+  });
+}
+
+
+
+
+

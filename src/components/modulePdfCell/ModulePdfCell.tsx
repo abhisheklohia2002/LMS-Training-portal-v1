@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button, Modal, Space, Tag, Upload, message } from "antd";
 import { UploadOutlined, EyeOutlined } from "@ant-design/icons";
-import type { UploadFile } from "antd/es/upload/interface";
 import {
   useModuleDocuments,
+  useModuleVideo,
   useUploadModulePdf,
+  useUploadModuleVideo,
 } from "../../hooks/useModuleDocuments";
+import { Progress } from "antd";
 
 type ModuleDocument = {
   document_id: number;
@@ -25,40 +27,66 @@ type ModuleDocument = {
   thumbnail_size?: number;
 };
 
-export function ModulePdfCell({
-  moduleId,
-  moduleTitle,
-  courseId,
-}: {
+type ModuleVideo = {
+  video_id: number;
+  course_id: number;
+  module_id: number;
+  title?: string;
+  video_name?: string;
+  video_url?: string;
+  video_public_id?: string;
+  video_size?: number;
+  video_type?: string;
+  is_active?: boolean;
+};
+
+type Props = {
   moduleId: number;
   moduleTitle: string;
   courseId: number;
-}) {
+};
+
+export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
   const { data } = useModuleDocuments(moduleId);
+  const { data: videoData } = useModuleVideo(moduleId);
+
+const [videoProgress, setVideoProgress] = useState(0);
   const uploadModulePdf = useUploadModulePdf(courseId);
+  const uploadModuleVideo = useUploadModuleVideo(courseId);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [videoUploadOpen, setVideoUploadOpen] = useState(false);
+  const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
+
   const [currentPdf, setCurrentPdf] = useState<ModuleDocument | null>(null);
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const documents: ModuleDocument[] = data?.documents || data || [];
   const latestPdf = currentPdf || documents?.[0] || null;
 
+  const moduleVideo: ModuleVideo | null = videoData?.video || null;
+
   useEffect(() => {
-    if (!currentPdf && documents?.length > 0) {
+    if (!currentPdf && documents.length > 0) {
       setCurrentPdf(documents[0]);
     }
   }, [documents, currentPdf]);
 
-  const resetUploadState = () => {
+  const resetPdfUploadState = () => {
     setPdfFile(null);
     setThumbnailFile(null);
   };
 
-  const handleUpload = () => {
+  const resetVideoUploadState = () => {
+    setVideoFile(null);
+      setVideoProgress(0);
+  };
+
+  const handlePdfUpload = () => {
     if (!pdfFile) {
       message.error("Please select PDF file");
       return;
@@ -68,100 +96,158 @@ export function ModulePdfCell({
       message.error("Please select thumbnail image");
       return;
     }
+    setUploadOpen(!uploadOpen)
 
-    const payload: {
-      moduleId: number;
-      file: File;
-      thumbnail: File;
-      title: string;
-      publicId?: string;
-      oldThumbnailPublicId?: string;
-    } = {
-      moduleId,
-      file: pdfFile,
-      thumbnail: thumbnailFile,
-      title: moduleTitle,
-    };
-
-    if (latestPdf?.public_id) {
-      payload.publicId = latestPdf.public_id;
-    }
-
-    if (latestPdf?.thumbnail_public_id) {
-      payload.oldThumbnailPublicId = latestPdf.thumbnail_public_id;
-    }
-
-    uploadModulePdf.mutate(payload, {
-      onSuccess: (data) => {
-        message.success("PDF uploaded successfully");
-
-        if (data?.document) {
-          setCurrentPdf(data.document);
-          setPreviewOpen(true);
-        }
-
-        setUploadOpen(false);
-        resetUploadState();
+    uploadModulePdf.mutate(
+      {
+        moduleId,
+        file: pdfFile,
+        thumbnail: thumbnailFile,
+        title: moduleTitle,
+        publicId: latestPdf?.public_id,
+        oldThumbnailPublicId: latestPdf?.thumbnail_public_id,
       },
-      onError: () => {
-        message.error("PDF upload failed");
+      {
+        onSuccess: (response) => {
+          message.success("PDF and thumbnail uploaded successfully");
+
+          if (response?.document) {
+            setCurrentPdf(response.document);
+            setPreviewOpen(true);
+          }
+
+          setUploadOpen(false);
+          resetPdfUploadState();
+        },
+        onError: () => {
+          message.error("PDF upload failed");
+        },
       },
-    });
+    );
+  };
+
+  const handleVideoUpload = () => {
+    if (!videoFile) {
+      message.error("Please select video file");
+      return;
+    }
+    // setVideoUploadOpen(!videoUploadOpen)
+    uploadModuleVideo.mutate(
+      {
+        courseId,
+        moduleId,
+        video: videoFile,
+        title: moduleTitle,
+        oldVideoPublicId: moduleVideo?.video_public_id,
+      },
+      {
+        onSuccess: () => {
+          message.success("Video uploaded successfully");
+          setVideoUploadOpen(false);
+          resetVideoUploadState();
+        },
+        onError: () => {
+          message.error("Video upload failed");
+        },
+      },
+    );
   };
 
   return (
     <>
-      <Space>
-        {latestPdf ? (
-          <>
-            <Tag color="green">PDF uploaded</Tag>
-
-            {latestPdf.thumbnail_url ? (
-              <img
-                src={latestPdf.thumbnail_url}
-                alt={latestPdf.title}
-                style={{
-                  width: 42,
-                  height: 42,
-                  objectFit: "cover",
-                  borderRadius: 6,
-                  border: "1px solid #eee",
-                }}
-              />
-            ) : (
-              <Tag color="orange">No thumbnail</Tag>
-            )}
-
-            <Button
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => setPreviewOpen(true)}
-            >
-              Preview
-            </Button>
-          </>
-        ) : (
-          <Tag color="red">No PDF</Tag>
-        )}
-
-        <Button
-          size="small"
-          icon={<UploadOutlined />}
-          loading={uploadModulePdf.isPending}
-          onClick={() => setUploadOpen(true)}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          minWidth: 620,
+        }}
+      >
+        <div
+          style={{
+            width: 58,
+            height: 58,
+            borderRadius: 8,
+            border: "1px solid #e5e7eb",
+            overflow: "hidden",
+            background: "#f9fafb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
         >
-          {latestPdf ? "Replace/Add" : "Upload PDF"}
-        </Button>
-      </Space>
+          {latestPdf?.thumbnail_url ? (
+            <img
+              src={latestPdf.thumbnail_url}
+              alt={latestPdf.title || moduleTitle}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <span style={{ fontSize: 11, color: "#999" }}>No image</span>
+          )}
+        </div>
+
+        <Space size={8} wrap>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            disabled={!latestPdf?.file_url}
+            onClick={() => setPreviewOpen(true)}
+             style={{
+              backgroundColor:`${!latestPdf?.file_url ? ``:"green"}`,
+              color:`${!latestPdf?.file_url ? ``:"white"}`,
+            }}
+          >
+            PDF
+          </Button>
+
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            disabled={!moduleVideo?.video_url}
+            onClick={() => setVideoPreviewOpen(true)}
+             style={{
+              backgroundColor:`${!moduleVideo?.video_url ? ``:"green"}`,
+              color:`${!moduleVideo?.video_url ? ``:"white"}`,
+            }}
+          >
+            Video
+          </Button>
+
+          <Button
+            size="small"
+            type={latestPdf ? "default" : "primary"}
+            icon={<UploadOutlined />}
+            loading={uploadModulePdf.isPending}
+            onClick={() => setUploadOpen(true)}
+          >
+            {latestPdf ? "Replace PDF" : "Upload PDF"}
+          </Button>
+
+          <Button
+            size="small"
+            icon={<UploadOutlined />}
+            loading={uploadModuleVideo.isPending}
+            onClick={() => setVideoUploadOpen(true)}
+          >
+            {moduleVideo?.video_url ? "Replace Video" : "Upload Video"}
+          </Button>
+        </Space>
+      </div>
 
       <Modal
         open={uploadOpen}
         title={latestPdf ? "Replace PDF and Thumbnail" : "Upload PDF and Thumbnail"}
         onCancel={() => {
           setUploadOpen(false);
-          resetUploadState();
+          resetPdfUploadState();
         }}
-        onOk={handleUpload}
+        onOk={handlePdfUpload}
         okText={latestPdf ? "Replace" : "Upload"}
         confirmLoading={uploadModulePdf.isPending}
       >
@@ -223,6 +309,47 @@ export function ModulePdfCell({
       </Modal>
 
       <Modal
+        open={videoUploadOpen}
+        title={moduleVideo?.video_url ? "Replace Video" : "Upload Video"}
+        onCancel={() => {
+          setVideoUploadOpen(false);
+          resetVideoUploadState();
+        }}
+        onOk={handleVideoUpload}
+        okText={moduleVideo?.video_url ? "Replace Video" : "Upload Video"}
+        confirmLoading={uploadModuleVideo.isPending}
+      >
+        <Upload
+          accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
+          maxCount={1}
+          beforeUpload={(file) => {
+            const allowedTypes = [
+              "video/mp4",
+              "video/quicktime",
+              "video/webm",
+              "video/x-matroska",
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+              message.error("Only MP4, MOV, WEBM, or MKV videos are allowed");
+              return Upload.LIST_IGNORE;
+            }
+
+            setVideoFile(file);
+            return false;
+          }}
+          onRemove={() => {
+            setVideoFile(null);
+          }}
+        >
+          <Button icon={<UploadOutlined />}>Select Video</Button>
+        </Upload>
+        {uploadModuleVideo.isPending && (
+      <Progress percent={videoProgress} size="small" status="active" />
+    )}
+      </Modal>
+
+      <Modal
         open={previewOpen}
         title={latestPdf?.title || "PDF Preview"}
         onCancel={() => setPreviewOpen(false)}
@@ -233,7 +360,7 @@ export function ModulePdfCell({
         {latestPdf?.file_url ? (
           <iframe
             src={latestPdf.file_url}
-            title={latestPdf.title}
+            title={latestPdf.title || "PDF Preview"}
             style={{
               width: "100%",
               height: "80vh",
@@ -242,6 +369,30 @@ export function ModulePdfCell({
           />
         ) : (
           <p>No PDF available</p>
+        )}
+      </Modal>
+
+      <Modal
+        open={videoPreviewOpen}
+        title={moduleVideo?.title || moduleVideo?.video_name || "Video Preview"}
+        onCancel={() => setVideoPreviewOpen(false)}
+        footer={null}
+        width="70%"
+        style={{ top: 30 }}
+      >
+        {moduleVideo?.video_url ? (
+          <video
+            src={moduleVideo.video_url}
+            controls
+            style={{
+              width: "100%",
+              maxHeight: "75vh",
+              borderRadius: 8,
+              background: "#000",
+            }}
+          />
+        ) : (
+          <p>No video available</p>
         )}
       </Modal>
     </>
