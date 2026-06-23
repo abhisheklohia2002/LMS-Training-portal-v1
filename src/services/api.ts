@@ -199,7 +199,6 @@ const normalizeModule = (mod: any): Module => ({
   due_days: Number(mod?.due_days ?? mod?.dueDays ?? 0),
   is_active: Boolean(mod?.is_active ?? mod?.isActive ?? true),
   duration_minutes: Number(mod.duration_minutes) ?? 0,
-
 });
 
 const normalizeMapping = (row: any): TrainingMapping => ({
@@ -1415,6 +1414,18 @@ export const api = {
         },
       ]);
     },
+    bulkUploadUsersToDepartment: async (
+  departmentId: number,
+  formData: FormData,
+) => {
+  return await requestFirst<any>([
+    {
+      method: "POST",
+      url: `/api/departments/${departmentId}/users/bulk-upload`,
+      data: formData,
+    },
+  ]);
+},
   },
   departmentTrainingMappings: {
     list: async () => {

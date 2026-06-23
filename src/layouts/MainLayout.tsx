@@ -115,14 +115,14 @@ export function MainLayout() {
                   </Link>
                 ),
               },
-              {
-                key: "/departments/training-mappings",
-                label: (
-                  <Link to="/departments/training-mappings">
-                    Training Mappings
-                  </Link>
-                ),
-              },
+              // {
+              //   key: "/departments/training-mappings",
+              //   label: (
+              //     <Link to="/departments/training-mappings">
+              //       Training Mappings
+              //     </Link>
+              //   ),
+              // },
             ],
           },
           {

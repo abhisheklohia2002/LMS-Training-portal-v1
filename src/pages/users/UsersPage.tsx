@@ -11,7 +11,11 @@ import {
   Alert,
   Table,
 } from "antd";
-import { DownCircleOutlined, EditOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  DownCircleOutlined,
+  EditOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { DataTable } from "../../components/common/DataTable";
@@ -51,7 +55,7 @@ type User = {
   department_id?: number;
   department?: Department;
   status: string;
-  role?:any
+  role?: any;
 };
 
 type UserFormValues = {
@@ -65,13 +69,13 @@ type UserFormValues = {
 };
 
 type userResponseXls = {
-  Full_Name:string;
-  Email:string;
-  Employee_code:string;
-  Role:string;
-  Department:string;
-  Status:boolean
-}
+  Full_Name: string;
+  Email: string;
+  Employee_code: string;
+  Role: string;
+  Department: string;
+  Status: boolean;
+};
 
 export function UsersPage() {
   const { data, isLoading } = useUsers();
@@ -86,7 +90,9 @@ export function UsersPage() {
   const [form] = Form.useForm<UserFormValues>();
   const [open, setOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+    number | undefined
+  >();
   const users: User[] = useMemo(() => {
     if (Array.isArray(data)) return data;
     if (Array.isArray((data as any)?.data)) return (data as any).data;
@@ -113,6 +119,17 @@ export function UsersPage() {
     });
     setOpen(true);
   };
+
+  const filteredUsers = useMemo(() => {
+    if (!selectedDepartmentId) {
+      return users;
+    }
+
+    return users.filter((user) => {
+      const userDepartmentId = user.department_id || user.department?.id;
+      return userDepartmentId === selectedDepartmentId;
+    });
+  }, [users, selectedDepartmentId]);
 
   const openEditDrawer = (user: User) => {
     setEditingUser(user);
@@ -231,25 +248,32 @@ export function UsersPage() {
     return false;
   };
   const handleDownloadTemplate = () => {
-    // console.log(data)
-    const response = data?.map((elem:User,index:number)=>{
-      return {
-        Full_Name:elem.full_name,
-        Email:elem.email,
-        Employee_code:elem.employee_code,
-        Role:elem.role,
-        Department:elem.department,
-        Status:elem.status,
-      }
-    })
-    // console.log(response)
-    const worksheet = XLSX.utils.json_to_sheet(response as any[]);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
-    const time = new Date()
-    
-    XLSX.writeFile(workbook, `User-list-${String(time.getUTCSeconds())}.xlsx`);
-  };
+  const response = filteredUsers.map((elem: User) => {
+    return {
+      Full_Name: elem.full_name || elem.name || "",
+      Email: elem.email,
+      Employee_code: elem.employee_code || "",
+      Role: findRole(roles, elem.role_id)?.role_name || "",
+      Department:
+        elem.department?.department_name ||
+        "",
+      Status: elem.status,
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(response);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+
+  const time = new Date();
+
+  XLSX.writeFile(
+    workbook,
+    `User-list-${String(time.getTime())}.xlsx`,
+  );
+};
+
   return (
     <>
       <PageHeader
@@ -257,10 +281,27 @@ export function UsersPage() {
         subtitle="Search, create and manage learners, managers and admins."
         actions={
           <Space>
-             <Button
-             disabled={data?.length === 0}
-             icon = {<DownCircleOutlined/>}
-             onClick={handleDownloadTemplate}>Download template</Button>
+            <Select
+              allowClear
+              placeholder="Filter by department"
+              loading={departmentsLoading}
+              style={{ width: 220 }}
+              value={selectedDepartmentId}
+              onChange={(value) => setSelectedDepartmentId(value)}
+              options={departments.map((d: any) => ({
+                label: d.department_name || d.name,
+                value: d.id,
+              }))}
+            />
+
+            <Button
+              disabled={filteredUsers.length === 0}
+              icon={<DownCircleOutlined />}
+              onClick={handleDownloadTemplate}
+            >
+              Download template
+            </Button>
+
             <Button
               icon={<UploadOutlined />}
               onClick={() => {
@@ -280,7 +321,7 @@ export function UsersPage() {
 
       <DataTable
         loading={isLoading}
-        dataSource={users}
+        dataSource={filteredUsers}
         columns={[
           {
             title: "Name",
