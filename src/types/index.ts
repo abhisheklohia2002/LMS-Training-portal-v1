@@ -41,6 +41,8 @@ export interface Course {
   is_active: boolean;
   created_at: string;
   total_duration_minutes: number;
+  thumbnail_url?: string;
+  thumbnail_public_id?: string;
 }
 export interface Module {
   module_id: ID;

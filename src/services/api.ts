@@ -188,6 +188,8 @@ const normalizeCourse = (course: any): Course => ({
   is_active: Boolean(course?.is_active ?? course?.isActive ?? true),
   created_at: course?.created_at ?? course?.createdAt ?? "",
   total_duration_minutes: course?.total_duration_minutes ?? 0,
+   thumbnail_url: course.thumbnail_url || "",
+    thumbnail_public_id: course.thumbnail_public_id || "",
 });
 
 const normalizeModule = (mod: any): Module => ({
@@ -542,27 +544,38 @@ export const api = {
   },
 
   courses: {
-    list: async () =>
-      listify<any>(
-        await requestFirst<any[]>([{ method: "GET", url: "/api/courses" }]),
-      ).map(normalizeCourse),
-    get: async (id: number) =>
-      normalizeCourse(
-        await requestFirst<any>([{ method: "GET", url: `/api/courses/${id}` }]),
-      ),
-    create: async (payload: Partial<Course>) =>
-      normalizeCourse(
-        await requestFirst<any>([
-          { method: "POST", url: "/api/courses", data: payload },
-        ]),
-      ),
-    update: async (id: number, payload: Partial<Course>) =>
-      normalizeCourse(
-        await requestFirst<any>([
-          { method: "PUT", url: `/api/courses/${id}`, data: payload },
-        ]),
-      ),
-  },
+  list: async () =>
+    listify<any>(
+      await requestFirst<any[]>([{ method: "GET", url: "/api/courses" }]),
+    ).map(normalizeCourse),
+
+  get: async (id: number) =>
+    normalizeCourse(
+      await requestFirst<any>([{ method: "GET", url: `/api/courses/${id}` }]),
+    ),
+
+  create: async (payload: FormData) =>
+    normalizeCourse(
+      await requestFirst<any>([
+        {
+          method: "POST",
+          url: "/api/courses",
+          data: payload,
+        },
+      ]),
+    ),
+
+  update: async (id: number, payload: FormData) =>
+    normalizeCourse(
+      await requestFirst<any>([
+        {
+          method: "PUT",
+          url: `/api/courses/${id}`,
+          data: payload,
+        },
+      ]),
+    ),
+},
 
   uploadModulePdf: async ({
     moduleId,

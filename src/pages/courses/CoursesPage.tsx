@@ -2,16 +2,26 @@ import {
   Button,
   Drawer,
   Form,
+  Image,
   Input,
   InputNumber,
+  Modal,
   Select,
   Space,
   Tag,
   Tooltip,
+  Upload,
   message,
 } from "antd";
-import { ClockCircleOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  ClockCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import { useState } from "react";
+import type { UploadFile } from "antd/es/upload/interface";
+
 import { DataTable } from "../../components/common/DataTable";
 import { PageHeader } from "../../components/common/PageHeader";
 import { StatusTag } from "../../components/common/StatusTag";
@@ -33,6 +43,45 @@ function formatDuration(minutes?: number) {
   return `${mins}m`;
 }
 
+function getFileFromUpload(fileList?: UploadFile[]) {
+  return fileList?.[0]?.originFileObj;
+}
+
+function buildCourseFormData(values: any) {
+  const formData = new FormData();
+
+  if (values.course_title !== undefined) {
+    formData.append("course_title", values.course_title || "");
+  }
+
+  if (values.course_description !== undefined) {
+    formData.append("course_description", values.course_description || "");
+  }
+
+  if (values.course_type !== undefined) {
+    formData.append("course_type", values.course_type || "");
+  }
+
+  if (values.total_duration_minutes !== undefined) {
+    formData.append(
+      "total_duration_minutes",
+      String(values.total_duration_minutes),
+    );
+  }
+
+  if (values.is_active !== undefined) {
+    formData.append("is_active", String(values.is_active));
+  }
+
+  const thumbnailFile = getFileFromUpload(values.thumbnail);
+
+  if (thumbnailFile) {
+    formData.append("thumbnail", thumbnailFile);
+  }
+
+  return formData;
+}
+
 export function CoursesPage() {
   const { data, isLoading } = useCourses();
   const create = useCreateCourse();
@@ -41,6 +90,9 @@ export function CoursesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
 
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -54,9 +106,51 @@ export function CoursesPage() {
       course_type: course.course_type,
       total_duration_minutes: course.total_duration_minutes,
       is_active: course.is_active,
+      thumbnail: course.thumbnail_url
+        ? [
+            {
+              uid: "-1",
+              name: "thumbnail",
+              status: "done",
+              url: course.thumbnail_url,
+            },
+          ]
+        : [],
     });
 
     setEditOpen(true);
+  };
+
+  const closeCreateDrawer = () => {
+    setCreateOpen(false);
+    createForm.resetFields();
+  };
+
+  const closeEditDrawer = () => {
+    setEditOpen(false);
+    setSelectedCourse(null);
+    editForm.resetFields();
+  };
+
+  const validateThumbnailBeforeUpload = (file: File) => {
+    const isValidImage =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/webp";
+
+    if (!isValidImage) {
+      message.error("Thumbnail must be JPG, PNG, or WEBP");
+      return Upload.LIST_IGNORE;
+    }
+
+    const isLessThan5MB = file.size / 1024 / 1024 < 5;
+
+    if (!isLessThan5MB) {
+      message.error("Thumbnail size must be less than 5MB");
+      return Upload.LIST_IGNORE;
+    }
+
+    return false;
   };
 
   return (
@@ -75,9 +169,70 @@ export function CoursesPage() {
         loading={isLoading}
         dataSource={data}
         expandable={{
-          expandedRowRender: (r) => <CourseDetail courseId={r.course_id} />,
+          expandedRowRender: (r: any) => (
+            <CourseDetail courseId={r.course_id} />
+          ),
         }}
         columns={[
+          {
+            title: "Thumbnail",
+            dataIndex: "thumbnail_url",
+            width: 120,
+            render: (thumbnailUrl: string) => {
+              if (!thumbnailUrl) {
+                return "-";
+              }
+
+              return (
+                <div
+                  style={{
+                    position: "relative",
+                    width: 80,
+                    height: 50,
+                    display: "inline-block",
+                  }}
+                >
+                  <Image
+                    src={thumbnailUrl}
+                    alt="Course thumbnail"
+                    width={80}
+                    height={50}
+                    style={{
+                      objectFit: "cover",
+                      borderRadius: 8,
+                      display: "block",
+                    }}
+                    preview={false}
+                  />
+
+                  <Button
+                    size="small"
+                    shape="circle"
+                    icon={<EyeOutlined />}
+                    onClick={() => {
+                      setPreviewImage(thumbnailUrl);
+                      setPreviewOpen(true);
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      width: 24,
+                      height: 24,
+                      minWidth: 24,
+                      padding: 0,
+                      background: "rgba(255, 255, 255, 0.92)",
+                      border: "none",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  />
+                </div>
+              );
+            },
+          },
           {
             title: "Course",
             dataIndex: "course_title",
@@ -85,12 +240,12 @@ export function CoursesPage() {
           {
             title: "Type",
             dataIndex: "course_type",
-            render: (v) => <Tag>{v}</Tag>,
+            render: (v: string) => <Tag>{v}</Tag>,
           },
           {
             title: "Duration",
             dataIndex: "total_duration_minutes",
-            render: (v) => (
+            render: (v: number) => (
               <Tooltip title={`${v || 0} minutes`}>
                 <Tag icon={<ClockCircleOutlined />}>{formatDuration(v)}</Tag>
               </Tooltip>
@@ -98,11 +253,11 @@ export function CoursesPage() {
           },
           {
             title: "Status",
-            render: (_, r) => <StatusTag value={r.is_active} />,
+            render: (_: unknown, r: any) => <StatusTag value={r.is_active} />,
           },
           {
             title: "Action",
-            render: (_, r) => (
+            render: (_: unknown, r: any) => (
               <Button
                 icon={<EditOutlined />}
                 size="small"
@@ -115,17 +270,53 @@ export function CoursesPage() {
         ]}
       />
 
+      <Modal
+        open={previewOpen}
+        footer={null}
+        title="Course thumbnail"
+        width={520}
+        centered
+        onCancel={() => {
+          setPreviewOpen(false);
+          setPreviewImage("");
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            aspectRatio: "1 / 1",
+            overflow: "hidden",
+            borderRadius: 12,
+            background: "#f5f5f5",
+          }}
+        >
+          <Image
+            src={previewImage}
+            alt="Course thumbnail preview"
+            width="100%"
+            height="100%"
+            style={{
+              objectFit: "cover",
+            }}
+            preview={false}
+          />
+        </div>
+      </Modal>
+
       <Drawer
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={closeCreateDrawer}
         title="Create course"
         width={520}
+        destroyOnClose
       >
         <Form
           form={createForm}
           layout="vertical"
-          onFinish={(v) =>
-            create.mutate(v, {
+          onFinish={(values) => {
+            const formData = buildCourseFormData(values);
+
+            create.mutate(formData, {
               onSuccess: () => {
                 message.success("Course created");
                 createForm.resetFields();
@@ -136,8 +327,8 @@ export function CoursesPage() {
                   err?.response?.data?.error || "Failed to create course",
                 );
               },
-            })
-          }
+            });
+          }}
         >
           <Form.Item
             name="course_title"
@@ -159,8 +350,14 @@ export function CoursesPage() {
           >
             <Select
               options={[
-                { label: "Mandatory", value: "mandatory" },
-                { label: "Role based", value: "role_based" },
+                {
+                  label: "Mandatory",
+                  value: "mandatory",
+                },
+                {
+                  label: "Role based",
+                  value: "role_based",
+                },
               ]}
             />
           </Form.Item>
@@ -169,7 +366,10 @@ export function CoursesPage() {
             name="total_duration_minutes"
             label="Total duration"
             rules={[
-              { required: true, message: "Total duration is required" },
+              {
+                required: true,
+                message: "Total duration is required",
+              },
               {
                 type: "number",
                 min: 1,
@@ -186,35 +386,62 @@ export function CoursesPage() {
             />
           </Form.Item>
 
+          <Form.Item
+            name="thumbnail"
+            label="Thumbnail"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => {
+              if (Array.isArray(e)) return e;
+              return e?.fileList;
+            }}
+          >
+            <Upload
+              beforeUpload={validateThumbnailBeforeUpload}
+              maxCount={1}
+              accept="image/png,image/jpeg,image/webp"
+              listType="picture"
+            >
+              <Button icon={<UploadOutlined />}>Upload Thumbnail</Button>
+            </Upload>
+          </Form.Item>
+
           <Space>
             <Button type="primary" htmlType="submit" loading={create.isPending}>
               Save
             </Button>
-            <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
+
+            <Button onClick={closeCreateDrawer}>Cancel</Button>
           </Space>
         </Form>
       </Drawer>
 
       <Drawer
         open={editOpen}
-        onClose={() => setEditOpen(false)}
+        onClose={closeEditDrawer}
         title="Edit course"
         width={520}
+        destroyOnClose
       >
         <Form
           form={editForm}
           layout="vertical"
-          onFinish={(v) =>
+          onFinish={(values) => {
+            if (!selectedCourse?.course_id) {
+              message.error("Course id missing");
+              return;
+            }
+
+            const formData = buildCourseFormData(values);
+
             update.mutate(
               {
                 id: selectedCourse.course_id,
-                payload: v,
+                payload: formData,
               },
               {
                 onSuccess: () => {
                   message.success("Course updated");
-                  setEditOpen(false);
-                  setSelectedCourse(null);
+                  closeEditDrawer();
                 },
                 onError: (err: any) => {
                   message.error(
@@ -222,8 +449,8 @@ export function CoursesPage() {
                   );
                 },
               },
-            )
-          }
+            );
+          }}
         >
           <Form.Item
             name="course_title"
@@ -244,8 +471,14 @@ export function CoursesPage() {
           >
             <Select
               options={[
-                { label: "Mandatory", value: "mandatory" },
-                { label: "Role based", value: "role_based" },
+                {
+                  label: "Mandatory",
+                  value: "mandatory",
+                },
+                {
+                  label: "Role based",
+                  value: "role_based",
+                },
               ]}
             />
           </Form.Item>
@@ -254,7 +487,10 @@ export function CoursesPage() {
             name="total_duration_minutes"
             label="Total duration"
             rules={[
-              { required: true, message: "Total duration is required" },
+              {
+                required: true,
+                message: "Total duration is required",
+              },
               {
                 type: "number",
                 min: 1,
@@ -274,17 +510,43 @@ export function CoursesPage() {
           <Form.Item name="is_active" label="Status">
             <Select
               options={[
-                { label: "Active", value: true },
-                { label: "Inactive", value: false },
+                {
+                  label: "Active",
+                  value: true,
+                },
+                {
+                  label: "Inactive",
+                  value: false,
+                },
               ]}
             />
+          </Form.Item>
+
+          <Form.Item
+            name="thumbnail"
+            label="Thumbnail"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => {
+              if (Array.isArray(e)) return e;
+              return e?.fileList;
+            }}
+          >
+            <Upload
+              beforeUpload={validateThumbnailBeforeUpload}
+              maxCount={1}
+              accept="image/png,image/jpeg,image/webp"
+              listType="picture"
+            >
+              <Button icon={<UploadOutlined />}>Upload Thumbnail</Button>
+            </Upload>
           </Form.Item>
 
           <Space>
             <Button type="primary" htmlType="submit" loading={update.isPending}>
               Update
             </Button>
-            <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+
+            <Button onClick={closeEditDrawer}>Cancel</Button>
           </Space>
         </Form>
       </Drawer>
