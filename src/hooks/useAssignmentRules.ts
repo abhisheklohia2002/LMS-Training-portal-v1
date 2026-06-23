@@ -1,4 +1,4 @@
-import { assignmentRules } from './../services/mockData';
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { queryKeys } from "../services/queryKeys";
