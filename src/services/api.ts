@@ -3,13 +3,11 @@ import axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
 } from "axios";
-import dayjs from "dayjs";
 import type {
   Assessment,
   AssessmentAttempt,
   AssessmentQuestion,
   AssessmentQuestionOption,
-  AssessmentRule,
   SubmitAssessmentPayload,
   CertificateIssue,
   Certification,
@@ -189,6 +187,7 @@ const normalizeCourse = (course: any): Course => ({
   ),
   is_active: Boolean(course?.is_active ?? course?.isActive ?? true),
   created_at: course?.created_at ?? course?.createdAt ?? "",
+  total_duration_minutes: course?.total_duration_minutes ?? 0,
 });
 
 const normalizeModule = (mod: any): Module => ({
@@ -199,6 +198,8 @@ const normalizeModule = (mod: any): Module => ({
   sequence_no: Number(mod?.sequence_no ?? mod?.sequenceNo ?? 0),
   due_days: Number(mod?.due_days ?? mod?.dueDays ?? 0),
   is_active: Boolean(mod?.is_active ?? mod?.isActive ?? true),
+  duration_minutes: Number(mod.duration_minutes) ?? 0,
+
 });
 
 const normalizeMapping = (row: any): TrainingMapping => ({
@@ -238,16 +239,7 @@ const normalizeProgress = (row: any): ModuleProgress => ({
   completed_at: row?.completed_at ?? row?.completedAt ?? null,
 });
 
-const normalizeAssessmentRule = (row: any): AssessmentRule => ({
-  assessment_rule_id: Number(row?.assessment_rule_id ?? row?.id ?? 0),
-  max_attempts: Number(row?.max_attempts ?? row?.maxAttempts ?? 1),
-  passing_score: Number(row?.passing_score ?? row?.passingScore ?? 0),
-  retake_allowed: Boolean(row?.retake_allowed ?? row?.retakeAllowed ?? false),
-  evaluation_method: row?.evaluation_method ?? row?.evaluationMethod ?? "score",
-});
-
 const normalizeAssessment = (row: any): Assessment => {
-  console.log(row, "------------->");
   return {
     assessment_id: Number(row?.assessment_id ?? row?.id ?? 0),
     course_id: Number(row?.course_id ?? row?.courseID ?? 0),
@@ -611,59 +603,59 @@ export const api = {
       },
     ]);
   },
- 
- uploadModuleVideo: async ({
-  courseId,
-  moduleId,
-  video,
-  title,
-  oldVideoPublicId,
-  onProgress,
-}: {
-  courseId: number;
-  moduleId: number;
-  video: File;
-  title?: string;
-  oldVideoPublicId?: string;
-  onProgress?: (percent: number) => void;
-}) => {
-  const formData = new FormData();
 
-  formData.append("course_id", String(courseId));
-  formData.append("title", title || "");
-  formData.append("video", video);
+  uploadModuleVideo: async ({
+    courseId,
+    moduleId,
+    video,
+    title,
+    oldVideoPublicId,
+    onProgress,
+  }: {
+    courseId: number;
+    moduleId: number;
+    video: File;
+    title?: string;
+    oldVideoPublicId?: string;
+    onProgress?: (percent: number) => void;
+  }) => {
+    const formData = new FormData();
 
-  if (oldVideoPublicId) {
-    formData.append("oldVideoPublicId", oldVideoPublicId);
-  }
+    formData.append("course_id", String(courseId));
+    formData.append("title", title || "");
+    formData.append("video", video);
 
-  return await requestFirst<any>([
-  {
-    method: "POST",
-    url: `/api/module-documents/${moduleId}/video`,
-    data: formData,
-    timeout: 15 * 60 * 1000,
-    onUploadProgress: (progressEvent) => {
-      if (!progressEvent.total) return;
+    if (oldVideoPublicId) {
+      formData.append("oldVideoPublicId", oldVideoPublicId);
+    }
 
-      const percent = Math.round(
-        (progressEvent.loaded * 100) / progressEvent.total,
-      );
+    return await requestFirst<any>([
+      {
+        method: "POST",
+        url: `/api/module-documents/${moduleId}/video`,
+        data: formData,
+        timeout: 15 * 60 * 1000,
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
 
-      onProgress?.(percent);
-    },
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+
+          onProgress?.(percent);
+        },
+      },
+    ]);
   },
-]);
-},
 
   getModuleVideo: async (moduleId: number) => {
-  return await requestFirst<any>([
-    {
-      method: "GET",
-      url: `/api/module-documents/${moduleId}/video`,
-    },
-  ]);
-},
+    return await requestFirst<any>([
+      {
+        method: "GET",
+        url: `/api/module-documents/${moduleId}/video`,
+      },
+    ]);
+  },
   getModuleDocuments: async (moduleId: number) => {
     return await requestFirst<any>([
       {
@@ -698,6 +690,25 @@ export const api = {
               ...payload,
               course_id: Number(payload.course_id),
               sequence_no: Number(payload.sequence_no),
+              due_days: Number(payload.due_days),
+              is_active: Boolean(payload.is_active),
+              duration_minutes: Number(payload.duration_minutes),
+            },
+          },
+        ]),
+      ),
+
+    update: async (id: number, payload: Partial<Module>) =>
+      normalizeModule(
+        await requestFirst<any>([
+          {
+            method: "PUT",
+            url: `/api/modules/${id}`,
+            data: {
+              ...payload,
+              course_id: Number(payload.course_id),
+              sequence_no: Number(payload.sequence_no),
+              duration_minutes: Number(payload.duration_minutes),
               due_days: Number(payload.due_days),
               is_active: Boolean(payload.is_active),
             },

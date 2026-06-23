@@ -21,6 +21,7 @@ import {
   FileDoneOutlined,
   PlayCircleOutlined,
   SafetyCertificateOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 
 import { useEffect, useRef, useState } from "react";
@@ -72,22 +73,48 @@ function moduleStatus(progress?: ModuleProgress) {
   if (progress.status === "in_progress") return "in progress";
   return "pending";
 }
+function formatExamTime(seconds: number) {
+  const safeSeconds = Math.max(seconds, 0);
 
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const secs = safeSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${String(minutes).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`;
+  }
+
+  return `${String(minutes).padStart(2, "0")}m ${String(secs).padStart(2, "0")}s`;
+}
+
+function formatDuration(minutes?: number) {
+  if (!minutes) return "0 min";
+
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${mins}m`;
+}
 function QuizModal({
   assessment,
   userId,
   open,
   onClose,
+  durationMinutes,
 }: {
   assessment?: Assessment;
   userId: number;
   open: boolean;
   onClose: () => void;
+  durationMinutes: number;
 }) {
   const [form] = Form.useForm();
   const quizContainerRef = useRef<HTMLDivElement | null>(null);
   const isSubmittingRef = useRef(false);
-
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const hasAutoSubmittedRef = useRef(false);
   const { data: questions = [], isLoading } = useLearnerAssessmentQuestions(
     assessment?.assessment_id,
   );
@@ -111,6 +138,43 @@ function QuizModal({
       // Ignore browser fullscreen exit errors
     }
   };
+
+  useEffect(() => {
+    if (!open || !assessment) return;
+
+    const totalSeconds = Math.max(Number(durationMinutes || 0) * 60, 0);
+
+    if (totalSeconds <= 0) {
+      message.error("Assessment timer is not configured.");
+      onClose();
+      return;
+    }
+
+    setRemainingSeconds(totalSeconds);
+    hasAutoSubmittedRef.current = false;
+
+    const intervalId = window.setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(intervalId);
+
+          if (!hasAutoSubmittedRef.current && !isSubmittingRef.current) {
+            hasAutoSubmittedRef.current = true;
+            message.warning("Time is over. Submitting your assessment.");
+            form.submit();
+          }
+
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [open, assessment?.assessment_id, durationMinutes]);
 
   useEffect(() => {
     if (!open) return;
@@ -233,13 +297,23 @@ function QuizModal({
           </div>
         </div>
 
-        <Button
-          type="primary"
-          loading={submit.isPending}
-          onClick={() => form.submit()}
-        >
-          Submit quiz
-        </Button>
+        <div className="flex items-center gap-3">
+          <Tag
+            color={remainingSeconds <= 60 ? "red" : "blue"}
+            icon={<ClockCircleOutlined />}
+            className="px-3 py-1 text-base"
+          >
+            {formatExamTime(remainingSeconds)}
+          </Tag>
+
+          {/* <Button
+            type="primary"
+            loading={submit.isPending}
+            onClick={() => form.submit()}
+          >
+            Submit quiz
+          </Button> */}
+        </div>
       </div>
 
       {/* Warning */}
@@ -766,10 +840,10 @@ function TrainingCard({
   const { data: certificateIssues = [] } = useCertificateIssuesByUser(userId);
   const { data: attendance = [] } = useAttendanceByUser(userId);
   // const { data: attendanceSummary } = useAttendanceSummary(
-    //   userId,
-    //   assignment.course_id,
-    // );
-    console.log(attendance, "attendance------");
+  //   userId,
+  //   assignment.course_id,
+  // );
+  console.log(attendance, "attendance------");
   const complete = useCompleteModule();
   const issueCertificate = useIssueCertificate();
   const { data: sessions } = useCreateTrainingSession();
@@ -870,19 +944,25 @@ function TrainingCard({
         userId={userId}
         open={Boolean(activeQuiz)}
         onClose={() => setActiveQuiz(undefined)}
+        durationMinutes={course?.total_duration_minutes ?? 0}
       />
       <div className="flex flex-col gap-5">
         <div>
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
-            <div>
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-lg font-semibold">
                 {course?.course_title ?? `Course ${assignment.course_id}`}
               </h3>
-              <p className="text-slate-500">
-                Only modules and quizzes from your assigned training are shown
-                here. Unassigned course content is hidden.
-              </p>
+
+              <Tag icon={<ClockCircleOutlined />} color="blue">
+                Total time: {formatDuration(course?.total_duration_minutes)}
+              </Tag>
             </div>
+
+            <p className="text-slate-500">
+              Only modules and quizzes from your assigned training are shown
+              here. Unassigned course content is hidden.
+            </p>
             <StatusTag value={assignment.status} />
           </div>
           <Progress

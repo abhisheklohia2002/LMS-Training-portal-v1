@@ -40,6 +40,7 @@ export interface Course {
   created_by_user_id: ID;
   is_active: boolean;
   created_at: string;
+  total_duration_minutes: number;
 }
 export interface Module {
   module_id: ID;
@@ -49,6 +50,7 @@ export interface Module {
   sequence_no: number;
   due_days: number;
   is_active: boolean;
+  duration_minutes:number;
 }
 export interface TrainingMapping {
   mapping_id: ID;

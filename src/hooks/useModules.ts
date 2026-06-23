@@ -49,3 +49,23 @@ export const useCompleteModule = () => {
     },
   });
 };
+
+
+export const useUpdateModule = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: Partial<Module>;
+    }) => api.modules.update(id, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({
+        queryKey: queryKeys.modules(variables.payload.course_id || ""),
+      });
+    },
+  });
+};
