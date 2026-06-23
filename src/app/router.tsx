@@ -65,10 +65,10 @@ export const router = createBrowserRouter([
                     path: "assignments",
                     element: <DepartmentAssignmentPanel />,
                   },
-                  {
-                    path: "training-mappings",
-                    element: <TrainingMappingsPage />,
-                  },
+                  // {
+                  //   path: "training-mappings",
+                  //   element: <TrainingMappingsPage />,
+                  // },
                 ],
               },
             ],

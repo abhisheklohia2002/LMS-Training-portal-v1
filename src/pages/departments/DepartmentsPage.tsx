@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Button,
   Form,
@@ -16,9 +16,9 @@ import {
 import {
   DeleteOutlined,
   EditOutlined,
-  NumberOutlined,
   PlusOutlined,
   TeamOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import { useEntities } from "../../hooks/useEntities";
 import {
@@ -28,6 +28,7 @@ import {
   useUpdateDepartment,
 } from "../../hooks/useDepartments";
 import { CreateDepartmentPayload, Department, Entity } from "../../types";
+import { useBulkUploadUsersToDepartment } from "../../hooks/useDepartmentTrainingMappings";
 
 const { Title, Text } = Typography;
 
@@ -43,13 +44,20 @@ export function DepartmentsPage() {
   const createDepartment = useCreateDepartment();
   const updateDepartment = useUpdateDepartment();
   const deleteDepartment = useDeleteDepartment();
+  const bulkUploadUsersToDepartment = useBulkUploadUsersToDepartment();
+
   const { data: entityData, isLoading: isEntitiesLoading } = useEntities();
+
   const [form] = Form.useForm<DepartmentFormValues>();
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(
-    null,
-  );
+  const [editingDepartment, setEditingDepartment] =
+    useState<Department | null>(null);
+
+  const [selectedUploadDepartment, setSelectedUploadDepartment] =
+    useState<Department | null>(null);
 
   const departments: Department[] = useMemo(() => {
     return data?.departments || data || [];
@@ -91,6 +99,82 @@ export function DepartmentsPage() {
     setModalOpen(false);
     setEditingDepartment(null);
     form.resetFields();
+  };
+
+  const openUserUpload = (department: Department) => {
+    setSelectedUploadDepartment(department);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleUserFileUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!selectedUploadDepartment) {
+      message.error("Please select department first");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      message.error("Only .xlsx files are allowed");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      return;
+    }
+
+    bulkUploadUsersToDepartment.mutate(
+      {
+        departmentId: selectedUploadDepartment.id,
+        file,
+      },
+      {
+        onSuccess: (response: any) => {
+          message.success(
+            `Upload completed. Success: ${
+              response?.success_count || 0
+            }, Failed: ${response?.failed_count || 0}`,
+          );
+
+          if (response?.errors?.length) {
+            console.table(response.errors);
+          }
+
+          setSelectedUploadDepartment(null);
+
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        },
+        onError: (error: any) => {
+          message.error(
+            error?.response?.data?.error ||
+              error?.response?.data?.message ||
+              "User upload failed",
+          );
+
+          setSelectedUploadDepartment(null);
+
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        },
+      },
+    );
   };
 
   const handleSubmit = async () => {
@@ -160,15 +244,13 @@ export function DepartmentsPage() {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      render: (value: string) => 
-      {
-       return  (
-        <Space>
-          {/* <NumberOutlined /> */}
-          <Text strong>{value}</Text>
-        </Space>
-      )
-      }
+      render: (value: number) => {
+        return (
+          <Space>
+            <Text strong>{value}</Text>
+          </Space>
+        );
+      },
     },
     {
       title: "Department",
@@ -208,9 +290,21 @@ export function DepartmentsPage() {
     {
       title: "Actions",
       key: "actions",
-      width: 200,
+      width: 340,
       render: (_: unknown, record: Department) => (
         <Space>
+          <Button
+            size="small"
+            icon={<UploadOutlined />}
+            loading={
+              bulkUploadUsersToDepartment.isPending &&
+              selectedUploadDepartment?.id === record.id
+            }
+            onClick={() => openUserUpload(record)}
+          >
+            Upload Users
+          </Button>
+
           <Button
             size="small"
             icon={<EditOutlined />}
@@ -284,6 +378,14 @@ export function DepartmentsPage() {
         }}
       />
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx"
+        hidden
+        onChange={handleUserFileUpload}
+      />
+
       <Modal
         open={modalOpen}
         title={editingDepartment ? "Edit Department" : "Create Department"}
@@ -323,6 +425,7 @@ export function DepartmentsPage() {
                 }))}
             />
           </Form.Item>
+
           <Form.Item
             label="Department name"
             name="department_name"

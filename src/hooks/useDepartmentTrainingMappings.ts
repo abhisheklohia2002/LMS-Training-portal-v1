@@ -32,3 +32,38 @@ export const useCreateDepartmentTrainingMapping = () => {
     },
   });
 };
+
+
+
+type BulkUploadUsersToDepartmentPayload = {
+  departmentId: number;
+  file: File;
+};
+
+export function useBulkUploadUsersToDepartment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      departmentId,
+      file,
+    }: BulkUploadUsersToDepartmentPayload) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      return await api.department.bulkUploadUsersToDepartment(
+        departmentId,
+        formData,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["departments"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    },
+  });
+}
