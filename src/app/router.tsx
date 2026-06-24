@@ -57,10 +57,10 @@ export const router = createBrowserRouter([
                     index: true,
                     element: <DepartmentsPage />,
                   },
-                  {
-                    path: "mappings",
-                    element: <DepartmentMappingsPanel />,
-                  },
+                  // {
+                  //   path: "mappings",
+                  //   element: <DepartmentMappingsPanel />,
+                  // },
                   {
                     path: "assignments",
                     element: <DepartmentAssignmentPanel />,

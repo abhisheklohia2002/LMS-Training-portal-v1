@@ -101,12 +101,12 @@ export function MainLayout() {
                 key: "/departments",
                 label: <Link to="/departments">Department List</Link>,
               },
-              {
-                key: "/departments/mappings",
-                label: (
-                  <Link to="/departments/mappings">Department Mappings</Link>
-                ),
-              },
+              // {
+              //   key: "/departments/mappings",
+              //   label: (
+              //     <Link to="/departments/mappings">Department Mappings</Link>
+              //   ),
+              // },
               {
                 key: "/departments/assignments",
                 label: (
@@ -150,7 +150,7 @@ export function MainLayout() {
           },
           {
             key: "/admin/notifications/create",
-            icon: <NotificationOutlined/>,
+            icon: <NotificationOutlined />,
             label: <Link to="/admin/notifications/create">Announcements</Link>,
           },
           {
@@ -188,7 +188,25 @@ export function MainLayout() {
         trigger={null}
         className="!bg-slate-950 h-screen overflow-y-auto"
       >
-        <div className="p-5 text-xl font-bold text-white">LMS Portal</div>
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10 bg-slate-900">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-md">
+            <img
+              src="https://res-console.cloudinary.com/da0ljrp3z/thumbnails/transform/v1/image/upload/Y19maWxsLGhfMjAwLHdfMjAw/v1/Q2hhdEdQVF9JbWFnZV9KdW5fMjRfMjAyNl8xMF80Ml8yOV9BTV9wYW5meWc=/template_primary"
+              alt="TripXL"
+              className="h-7 w-auto object-contain"
+            />
+          </div>
+
+          <div className="flex flex-col leading-tight">
+            <span className="text-xl font-extrabold tracking-wide">
+              <span className="text-teal-400">Trip</span>
+              <span className="text-orange-400">XL</span>
+            </span>
+            <span className="text-xs font-medium uppercase tracking-[0.22em] text-slate-300">
+              LMS Portal
+            </span>
+          </div>
+        </div>
 
         <Menu
           theme="dark"
