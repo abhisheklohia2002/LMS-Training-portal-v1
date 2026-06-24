@@ -50,7 +50,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
   const { data } = useModuleDocuments(moduleId);
   const { data: videoData } = useModuleVideo(moduleId);
 
-const [videoProgress, setVideoProgress] = useState(0);
+  const [videoProgress, setVideoProgress] = useState(0);
   const uploadModulePdf = useUploadModulePdf(courseId);
   const uploadModuleVideo = useUploadModuleVideo(courseId);
 
@@ -83,7 +83,7 @@ const [videoProgress, setVideoProgress] = useState(0);
 
   const resetVideoUploadState = () => {
     setVideoFile(null);
-      setVideoProgress(0);
+    setVideoProgress(0);
   };
 
   const handlePdfUpload = () => {
@@ -96,7 +96,7 @@ const [videoProgress, setVideoProgress] = useState(0);
       message.error("Please select thumbnail image");
       return;
     }
-    setUploadOpen(!uploadOpen)
+    setUploadOpen(!uploadOpen);
 
     uploadModulePdf.mutate(
       {
@@ -192,57 +192,67 @@ const [videoProgress, setVideoProgress] = useState(0);
           )}
         </div>
 
-        <Space size={8} wrap>
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            disabled={!latestPdf?.file_url}
-            onClick={() => setPreviewOpen(true)}
-             style={{
-              backgroundColor:`${!latestPdf?.file_url ? ``:"green"}`,
-              color:`${!latestPdf?.file_url ? ``:"white"}`,
-            }}
-          >
-            PDF
-          </Button>
+        <Space direction="vertical" size={8}>
+          <Space size={8}>
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              disabled={!latestPdf?.file_url}
+              onClick={() => setPreviewOpen(true)}
+              style={{
+                width: 90,
+                backgroundColor: latestPdf?.file_url ? "green" : undefined,
+                color: latestPdf?.file_url ? "white" : undefined,
+              }}
+            >
+              PDF
+            </Button>
 
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            disabled={!moduleVideo?.video_url}
-            onClick={() => setVideoPreviewOpen(true)}
-             style={{
-              backgroundColor:`${!moduleVideo?.video_url ? ``:"green"}`,
-              color:`${!moduleVideo?.video_url ? ``:"white"}`,
-            }}
-          >
-            Video
-          </Button>
+            <Button
+              size="small"
+              type={latestPdf ? "default" : "primary"}
+              icon={<UploadOutlined />}
+              loading={uploadModulePdf.isPending}
+              onClick={() => setUploadOpen(true)}
+              style={{ width: 130 }}
+            >
+              {latestPdf ? "Replace PDF" : "Upload PDF"}
+            </Button>
+          </Space>
 
-          <Button
-            size="small"
-            type={latestPdf ? "default" : "primary"}
-            icon={<UploadOutlined />}
-            loading={uploadModulePdf.isPending}
-            onClick={() => setUploadOpen(true)}
-          >
-            {latestPdf ? "Replace PDF" : "Upload PDF"}
-          </Button>
+          <Space size={8}>
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              disabled={!moduleVideo?.video_url}
+              onClick={() => setVideoPreviewOpen(true)}
+              style={{
+                width: 90,
+                backgroundColor: moduleVideo?.video_url ? "green" : undefined,
+                color: moduleVideo?.video_url ? "white" : undefined,
+              }}
+            >
+              Video
+            </Button>
 
-          <Button
-            size="small"
-            icon={<UploadOutlined />}
-            loading={uploadModuleVideo.isPending}
-            onClick={() => setVideoUploadOpen(true)}
-          >
-            {moduleVideo?.video_url ? "Replace Video" : "Upload Video"}
-          </Button>
+            <Button
+              size="small"
+              icon={<UploadOutlined />}
+              loading={uploadModuleVideo.isPending}
+              onClick={() => setVideoUploadOpen(true)}
+              style={{ width: 130 }}
+            >
+              {moduleVideo?.video_url ? "Replace Video" : "Upload Video"}
+            </Button>
+          </Space>
         </Space>
       </div>
 
       <Modal
         open={uploadOpen}
-        title={latestPdf ? "Replace PDF and Thumbnail" : "Upload PDF and Thumbnail"}
+        title={
+          latestPdf ? "Replace PDF and Thumbnail" : "Upload PDF and Thumbnail"
+        }
         onCancel={() => {
           setUploadOpen(false);
           resetPdfUploadState();
@@ -291,7 +301,9 @@ const [videoProgress, setVideoProgress] = useState(0);
                 ];
 
                 if (!allowedTypes.includes(file.type)) {
-                  message.error("Only PNG, JPG, JPEG, or WEBP images are allowed");
+                  message.error(
+                    "Only PNG, JPG, JPEG, or WEBP images are allowed",
+                  );
                   return Upload.LIST_IGNORE;
                 }
 
@@ -345,8 +357,8 @@ const [videoProgress, setVideoProgress] = useState(0);
           <Button icon={<UploadOutlined />}>Select Video</Button>
         </Upload>
         {uploadModuleVideo.isPending && (
-      <Progress percent={videoProgress} size="small" status="active" />
-    )}
+          <Progress percent={videoProgress} size="small" status="active" />
+        )}
       </Modal>
 
       <Modal

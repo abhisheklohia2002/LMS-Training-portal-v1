@@ -74,9 +74,29 @@ export function CourseModulesTab({ courseId }: Props) {
 
       <DataTable
         dataSource={modules}
+      
         columns={[
           { title: "Seq", dataIndex: "sequence_no" },
-          { title: "Title", dataIndex: "module_title" },
+          {
+            title: "Title",
+            dataIndex: "module_title",
+            render: (value: string) => (
+              <Tooltip title={value}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    maxWidth: 50,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {value || "-"}
+                </span>
+              </Tooltip>
+            ),
+          },
           {
             title: "Duration",
             dataIndex: "duration_minutes",
@@ -150,10 +170,10 @@ export function CourseModulesTab({ courseId }: Props) {
                 },
                 onError: (err: any) => {
                   message.error(
-                    err?.response?.data?.error || "Failed to create module"
+                    err?.response?.data?.error || "Failed to create module",
                   );
                 },
-              }
+              },
             )
           }
         >
@@ -260,10 +280,10 @@ export function CourseModulesTab({ courseId }: Props) {
                 },
                 onError: (err: any) => {
                   message.error(
-                    err?.response?.data?.error || "Failed to update module"
+                    err?.response?.data?.error || "Failed to update module",
                   );
                 },
-              }
+              },
             )
           }
         >
