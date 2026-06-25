@@ -47,6 +47,9 @@ type Props = {
   courseId: number;
 };
 
+
+
+
 export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
   const { data } = useModuleDocuments(moduleId);
   const { data: videoData } = useModuleVideo(moduleId);

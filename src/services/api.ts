@@ -635,15 +635,33 @@ export const api = {
   getPDFUploadTaskStatus: async (taskId: string) => {
     return await requestFirst<{
       task_id: string;
+      kind: "pdf";
       status: "queued" | "processing" | "completed" | "failed";
       progress: number;
       message: string;
       error?: string;
-      document?: any;
+      result?: any;
     }>([
       {
         method: "GET",
         url: `/api/module-documents/pdf-upload-tasks/${taskId}`,
+      },
+    ]);
+  },
+
+  getVideoUploadTaskStatus: async (taskId: string) => {
+    return await requestFirst<{
+      task_id: string;
+      kind: "video";
+      status: "queued" | "processing" | "completed" | "failed";
+      progress: number;
+      message: string;
+      error?: string;
+      result?: any;
+    }>([
+      {
+        method: "GET",
+        url: `/api/module-documents/video-upload-tasks/${taskId}`,
       },
     ]);
   },
@@ -692,22 +710,6 @@ export const api = {
 
           onProgress?.(percent);
         },
-      },
-    ]);
-  },
-
-  getVideoUploadTaskStatus: async (taskId: string) => {
-    return await requestFirst<{
-      task_id: string;
-      status: "queued" | "processing" | "completed" | "failed";
-      progress: number;
-      message: string;
-      error?: string;
-      video?: any;
-    }>([
-      {
-        method: "GET",
-        url: `/api/module-documents/video-upload-tasks/${taskId}`,
       },
     ]);
   },

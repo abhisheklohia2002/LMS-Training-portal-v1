@@ -57,10 +57,35 @@ type UploadContextValue = {
   removeUpload: (localId: string) => void;
 };
 
+
+const UPLOAD_STORAGE_KEY = "lms_active_uploads";
+
+function saveUploadsToStorage(uploads: UploadItem[]) {
+  const restorableUploads = uploads.filter((item) => item.taskId);
+
+  localStorage.setItem(
+    UPLOAD_STORAGE_KEY,
+    JSON.stringify(restorableUploads),
+  );
+}
+
+function loadUploadsFromStorage(): UploadItem[] {
+  try {
+    const raw = localStorage.getItem(UPLOAD_STORAGE_KEY);
+    if (!raw) return [];
+
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
 const UploadContext = createContext<UploadContextValue | null>(null);
 
 export function UploadProvider({ children }: { children: React.ReactNode }) {
-  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [uploads, setUploads] = useState<UploadItem[]>(() =>
+  loadUploadsFromStorage(),
+);
   const timers = useRef<Record<string, number>>({});
   const queryClient = useQueryClient();
 
@@ -374,6 +399,37 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
   const removeUpload = (localId: string) => {
     setUploads((prev) => prev.filter((item) => item.localId !== localId));
   };
+  useEffect(() => {
+  saveUploadsToStorage(uploads);
+}, [uploads]);
+
+useEffect(() => {
+  uploads.forEach((item) => {
+    if (!item.taskId) return;
+
+    if (item.status === "completed" || item.status === "failed") {
+      return;
+    }
+
+    if (item.kind === "video") {
+      pollVideoTask({
+        localId: item.localId,
+        taskId: item.taskId,
+        courseId: item.courseId,
+        moduleId: item.moduleId,
+      });
+    }
+
+    if (item.kind === "pdf") {
+      pollPDFTask({
+        localId: item.localId,
+        taskId: item.taskId,
+        courseId: item.courseId,
+        moduleId: item.moduleId,
+      });
+    }
+  });
+}, []);
 
   return (
     <UploadContext.Provider
