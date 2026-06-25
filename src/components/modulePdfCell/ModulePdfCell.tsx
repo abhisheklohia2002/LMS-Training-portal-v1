@@ -160,7 +160,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
           display: "flex",
           alignItems: "center",
           gap: 12,
-          minWidth: 620,
+          width: "max-content",
         }}
       >
         <div
