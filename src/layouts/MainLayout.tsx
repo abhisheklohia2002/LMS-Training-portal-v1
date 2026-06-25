@@ -191,7 +191,7 @@ export function MainLayout() {
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10 bg-slate-900">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-md">
             <img
-              src="src/public/images/idea.png"
+              src="https://res-console.cloudinary.com/da0ljrp3z/thumbnails/transform/v1/image/upload/Y19maWxsLGhfMjAwLHdfMjAw/v1/Q2hhdEdQVF9JbWFnZV9KdW5fMjRfMjAyNl8xMF80Ml8yOV9BTV9yamhncGc=/template_primary"
               alt="TripXL"
               className="h-7 w-auto object-contain"
             />
