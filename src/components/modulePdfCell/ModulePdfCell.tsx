@@ -8,6 +8,7 @@ import {
   useUploadModuleVideo,
 } from "../../hooks/useModuleDocuments";
 import { Progress } from "antd";
+import { useUploadManager } from "../../context/UploadProvider";
 
 type ModuleDocument = {
   document_id: number;
@@ -49,11 +50,11 @@ type Props = {
 export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
   const { data } = useModuleDocuments(moduleId);
   const { data: videoData } = useModuleVideo(moduleId);
-
+  // const { startVideoUpload } = useUploadManager();
   const [videoProgress, setVideoProgress] = useState(0);
-  const uploadModulePdf = useUploadModulePdf(courseId);
-  const uploadModuleVideo = useUploadModuleVideo(courseId);
-
+  const uploadModulePdf = useUploadModulePdf();
+  const uploadModuleVideo = useUploadModuleVideo();
+  const { startPDFUpload, startVideoUpload } = useUploadManager();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [videoUploadOpen, setVideoUploadOpen] = useState(false);
@@ -86,72 +87,48 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
     setVideoProgress(0);
   };
 
+  
   const handlePdfUpload = () => {
-    if (!pdfFile) {
-      message.error("Please select PDF file");
-      return;
-    }
+  if (!pdfFile) {
+    message.error("Please select PDF file");
+    return;
+  }
 
-    if (!thumbnailFile) {
-      message.error("Please select thumbnail image");
-      return;
-    }
-    setUploadOpen(!uploadOpen);
+  if (!thumbnailFile) {
+    message.error("Please select thumbnail image");
+    return;
+  }
 
-    uploadModulePdf.mutate(
-      {
-        moduleId,
-        file: pdfFile,
-        thumbnail: thumbnailFile,
-        title: moduleTitle,
-        publicId: latestPdf?.public_id,
-        oldThumbnailPublicId: latestPdf?.thumbnail_public_id,
-      },
-      {
-        onSuccess: (response) => {
-          message.success("PDF and thumbnail uploaded successfully");
+  startPDFUpload({
+    courseId,
+    moduleId,
+    file: pdfFile,
+    thumbnail: thumbnailFile,
+    title: moduleTitle,
+    publicId: latestPdf?.public_id,
+    oldThumbnailPublicId: latestPdf?.thumbnail_public_id,
+  });
 
-          if (response?.document) {
-            setCurrentPdf(response.document);
-            setPreviewOpen(true);
-          }
-
-          setUploadOpen(false);
-          resetPdfUploadState();
-        },
-        onError: () => {
-          message.error("PDF upload failed");
-        },
-      },
-    );
-  };
+  setUploadOpen(false);
+  resetPdfUploadState();
+};
 
   const handleVideoUpload = () => {
-    if (!videoFile) {
-      message.error("Please select video file");
-      return;
-    }
-    // setVideoUploadOpen(!videoUploadOpen)
-    uploadModuleVideo.mutate(
-      {
-        courseId,
-        moduleId,
-        video: videoFile,
-        title: moduleTitle,
-        oldVideoPublicId: moduleVideo?.video_public_id,
-      },
-      {
-        onSuccess: () => {
-          message.success("Video uploaded successfully");
-          setVideoUploadOpen(false);
-          resetVideoUploadState();
-        },
-        onError: () => {
-          message.error("Video upload failed");
-        },
-      },
-    );
-  };
+  if (!videoFile) {
+    message.error("Please select video file");
+    return;
+  }
+  startVideoUpload({
+    courseId,
+    moduleId,
+    video: videoFile,
+    title: moduleTitle,
+    oldVideoPublicId: moduleVideo?.video_public_id,
+  });
+
+  setVideoUploadOpen(false);
+  resetVideoUploadState();
+};
 
   return (
     <>

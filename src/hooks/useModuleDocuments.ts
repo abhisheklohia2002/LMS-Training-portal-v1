@@ -9,65 +9,15 @@ export function useModuleDocuments(moduleId?: number) {
   });
 }
 
-export function useUploadModulePdf(courseId: number) {
-  const queryClient = useQueryClient();
-
+export function useUploadModulePdf() {
   return useMutation({
-    mutationFn: ({
-      moduleId,
-      file,
-      thumbnail,
-      title,
-      publicId,
-      oldThumbnailPublicId,
-    }: {
-      moduleId: number;
-      file: File;
-      thumbnail: File;
-      title?: string;
-      publicId?: string;
-      oldThumbnailPublicId?: string;
-    }) =>
-      api.uploadModulePdf({
-        moduleId,
-        file,
-        thumbnail,
-        title,
-        publicId,
-        oldThumbnailPublicId,
-      }),
-
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["module-documents", variables.moduleId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["modules", courseId],
-      });
-    },
+    mutationFn: api.uploadModulePdf,
   });
 }
 
-export function useUploadModuleVideo(courseId: number) {
-  const queryClient = useQueryClient();
-
+export function useUploadModuleVideo() {
   return useMutation({
     mutationFn: api.uploadModuleVideo,
-
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["module-video", variables.moduleId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["module-documents", variables.moduleId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["modules", courseId],
-      });
-    },
   });
 }
 
@@ -78,8 +28,3 @@ export function useModuleVideo(moduleId: number) {
     enabled: !!moduleId,
   });
 }
-
-
-
-
-

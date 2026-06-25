@@ -188,8 +188,8 @@ const normalizeCourse = (course: any): Course => ({
   is_active: Boolean(course?.is_active ?? course?.isActive ?? true),
   created_at: course?.created_at ?? course?.createdAt ?? "",
   total_duration_minutes: course?.total_duration_minutes ?? 0,
-   thumbnail_url: course.thumbnail_url || "",
-    thumbnail_public_id: course.thumbnail_public_id || "",
+  thumbnail_url: course.thumbnail_url || "",
+  thumbnail_public_id: course.thumbnail_public_id || "",
 });
 
 const normalizeModule = (mod: any): Module => ({
@@ -544,38 +544,38 @@ export const api = {
   },
 
   courses: {
-  list: async () =>
-    listify<any>(
-      await requestFirst<any[]>([{ method: "GET", url: "/api/courses" }]),
-    ).map(normalizeCourse),
+    list: async () =>
+      listify<any>(
+        await requestFirst<any[]>([{ method: "GET", url: "/api/courses" }]),
+      ).map(normalizeCourse),
 
-  get: async (id: number) =>
-    normalizeCourse(
-      await requestFirst<any>([{ method: "GET", url: `/api/courses/${id}` }]),
-    ),
+    get: async (id: number) =>
+      normalizeCourse(
+        await requestFirst<any>([{ method: "GET", url: `/api/courses/${id}` }]),
+      ),
 
-  create: async (payload: FormData) =>
-    normalizeCourse(
-      await requestFirst<any>([
-        {
-          method: "POST",
-          url: "/api/courses",
-          data: payload,
-        },
-      ]),
-    ),
+    create: async (payload: FormData) =>
+      normalizeCourse(
+        await requestFirst<any>([
+          {
+            method: "POST",
+            url: "/api/courses",
+            data: payload,
+          },
+        ]),
+      ),
 
-  update: async (id: number, payload: FormData) =>
-    normalizeCourse(
-      await requestFirst<any>([
-        {
-          method: "PUT",
-          url: `/api/courses/${id}`,
-          data: payload,
-        },
-      ]),
-    ),
-},
+    update: async (id: number, payload: FormData) =>
+      normalizeCourse(
+        await requestFirst<any>([
+          {
+            method: "PUT",
+            url: `/api/courses/${id}`,
+            data: payload,
+          },
+        ]),
+      ),
+  },
 
   uploadModulePdf: async ({
     moduleId,
@@ -584,6 +584,7 @@ export const api = {
     title,
     publicId,
     oldThumbnailPublicId,
+    onProgress,
   }: {
     moduleId: number;
     file: File;
@@ -591,6 +592,7 @@ export const api = {
     title?: string;
     publicId?: string;
     oldThumbnailPublicId?: string;
+    onProgress?: (percent: number) => void;
   }) => {
     const formData = new FormData();
 
@@ -607,11 +609,41 @@ export const api = {
       formData.append("oldThumbnailPublicId", oldThumbnailPublicId);
     }
 
-    return await requestFirst<any>([
+    return await requestFirst<{
+      message: string;
+      task_id: string;
+      status: "queued" | "processing" | "completed" | "failed";
+    }>([
       {
         method: "POST",
-        url: "/api/module-documents/upload",
+        url: `/api/module-documents/upload`,
         data: formData,
+        timeout: 10 * 60 * 1000,
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
+
+          const percent = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+
+          onProgress?.(percent);
+        },
+      },
+    ]);
+  },
+
+  getPDFUploadTaskStatus: async (taskId: string) => {
+    return await requestFirst<{
+      task_id: string;
+      status: "queued" | "processing" | "completed" | "failed";
+      progress: number;
+      message: string;
+      error?: string;
+      document?: any;
+    }>([
+      {
+        method: "GET",
+        url: `/api/module-documents/pdf-upload-tasks/${taskId}`,
       },
     ]);
   },
@@ -641,7 +673,11 @@ export const api = {
       formData.append("oldVideoPublicId", oldVideoPublicId);
     }
 
-    return await requestFirst<any>([
+    return await requestFirst<{
+      message: string;
+      task_id: string;
+      status: "queued" | "processing" | "completed" | "failed";
+    }>([
       {
         method: "POST",
         url: `/api/module-documents/${moduleId}/video`,
@@ -660,6 +696,21 @@ export const api = {
     ]);
   },
 
+  getVideoUploadTaskStatus: async (taskId: string) => {
+    return await requestFirst<{
+      task_id: string;
+      status: "queued" | "processing" | "completed" | "failed";
+      progress: number;
+      message: string;
+      error?: string;
+      video?: any;
+    }>([
+      {
+        method: "GET",
+        url: `/api/module-documents/video-upload-tasks/${taskId}`,
+      },
+    ]);
+  },
   getModuleVideo: async (moduleId: number) => {
     return await requestFirst<any>([
       {
@@ -1428,17 +1479,17 @@ export const api = {
       ]);
     },
     bulkUploadUsersToDepartment: async (
-  departmentId: number,
-  formData: FormData,
-) => {
-  return await requestFirst<any>([
-    {
-      method: "POST",
-      url: `/api/departments/${departmentId}/users/bulk-upload`,
-      data: formData,
+      departmentId: number,
+      formData: FormData,
+    ) => {
+      return await requestFirst<any>([
+        {
+          method: "POST",
+          url: `/api/departments/${departmentId}/users/bulk-upload`,
+          data: formData,
+        },
+      ]);
     },
-  ]);
-},
   },
   departmentTrainingMappings: {
     list: async () => {
