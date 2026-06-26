@@ -201,6 +201,7 @@ const normalizeModule = (mod: any): Module => ({
   due_days: Number(mod?.due_days ?? mod?.dueDays ?? 0),
   is_active: Boolean(mod?.is_active ?? mod?.isActive ?? true),
   duration_minutes: Number(mod.duration_minutes) ?? 0,
+  course:mod.course
 });
 
 const normalizeMapping = (row: any): TrainingMapping => ({

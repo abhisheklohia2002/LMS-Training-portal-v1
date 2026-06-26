@@ -56,26 +56,33 @@ export function useAttendanceSummary(userId?: number, courseId?: number) {
     },
   });
 }
+
+
+
 export function useMark() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       sessionId,
       payload,
     }: {
       sessionId: number;
-      payload: MarkAttendancePayload;
+      payload: any;
     }) => api.attendance.mark(sessionId, payload),
 
     onSuccess: (_data, variables) => {
-      // queryClient.invalidateQueries({
-      //   queryKey: ["attendance", "user", variables.payload.user_id],
-      // });
-      // queryClient.invalidateQueries({
-      //   queryKey: ["attendance-summary"],
-      // });
-      // queryClient.invalidateQueries({
-      //   queryKey: ["attendance", "session", variables.sessionId],
-      // });
+      queryClient.invalidateQueries({
+        queryKey: ["attendance-by-user", variables.payload.user_id],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["attendance-summary", variables.payload.user_id],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["attendances"],
+      });
     },
   });
 }

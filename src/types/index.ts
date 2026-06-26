@@ -53,6 +53,7 @@ export interface Module {
   due_days: number;
   is_active: boolean;
   duration_minutes:number;
+  course:any
 }
 export interface TrainingMapping {
   mapping_id: ID;
