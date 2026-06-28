@@ -3,16 +3,15 @@ import {
   BookOutlined,
   BuildOutlined,
   DashboardOutlined,
-  FileProtectOutlined,
   FileTextOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   NotificationOutlined,
   ReadOutlined,
-  SafetyCertificateOutlined,
-  SettingOutlined,
   TeamOutlined,
   UserOutlined,
+  MoonOutlined,
+  SunOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -23,18 +22,19 @@ import {
   Input,
   Layout,
   Menu,
+  Switch,
 } from "antd";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useThemeMode } from "../context/ThemeProvider/ThemeProvider";
 import { useEffect, useMemo, useState } from "react";
 import { canManageLms } from "../utils/access";
 import { useLogout, useMe } from "../hooks/useAuth";
 import { useNotifications } from "../hooks/useNotifications";
 const { Header, Sider, Content } = Layout;
+
 export function MainLayout() {
   const location = useLocation();
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem("lms_theme") === "dark";
-  });
+  const { isDarkMode, toggleTheme } = useThemeMode();
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
@@ -163,7 +163,6 @@ export function MainLayout() {
     ];
   }, [isManagerOrAdmin]);
   const getRole = (roleName: string | undefined) => {
-    // if (roleName === undefined) return navigate('/login');?s
     return roleName;
   };
   useEffect(() => {
@@ -172,11 +171,6 @@ export function MainLayout() {
     }
   }, [location.pathname]);
 
-  useEffect(() => {
-    localStorage.setItem("lms_theme", isDarkMode ? "dark" : "light");
-
-    document.documentElement.classList.toggle("dark", isDarkMode);
-  }, [isDarkMode]);
   return (
     <Layout className="h-screen overflow-hidden">
       <Sider
@@ -191,7 +185,7 @@ export function MainLayout() {
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10 bg-slate-900">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-md">
             <img
-              src="https://res-console.cloudinary.com/da0ljrp3z/thumbnails/transform/v1/image/upload/Y19maWxsLGhfMjAwLHdfMjAw/v1/Q2hhdEdQVF9JbWFnZV9KdW5fMjRfMjAyNl8xMF80Ml8yOV9BTV9yamhncGc=/template_primary"
+              src="/images/idea.png"
               alt="TripXL"
               className="h-7 w-auto object-contain"
             />
@@ -217,8 +211,8 @@ export function MainLayout() {
         />
       </Sider>
 
-      <Layout className="h-screen overflow-hidden">
-        <Header className="flex items-center justify-between border-b border-slate-100 !bg-white px-5">
+      <Layout className="h-screen overflow-hidden ">
+        <Header className="flex h-16 items-center justify-between border-b border-slate-200 !bg-white px-5 dark:border-[#253249] dark:!bg-[#0F172A]">
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -231,6 +225,12 @@ export function MainLayout() {
           />
 
           <div className="flex items-center gap-5">
+            <Switch 
+              checked={isDarkMode}
+              onChange={toggleTheme}
+              checkedChildren={<MoonOutlined />}
+              unCheckedChildren={<SunOutlined />}
+            />
             <Badge count={unread}>
               <BellOutlined
                 className="text-xl"

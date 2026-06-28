@@ -59,6 +59,7 @@ import { useAttendanceByUser, useMark } from "../../hooks/useAttendance";
 import {
   useModuleDocuments,
   useModuleVideo,
+  useUpdateModuleVideoProgress,
 } from "../../hooks/useModuleDocuments";
 import { useCreateTrainingSession } from "../../hooks/useTrainingSessionsByCourse";
 import { useQueryClient } from "@tanstack/react-query";
@@ -427,6 +428,7 @@ function ModuleLearningItem({
   onCompleteModule,
   completeLoading,
   courseId,
+  assignmentId,
 }: {
   progress: ModuleProgress;
   module?: any;
@@ -439,10 +441,14 @@ function ModuleLearningItem({
   onCompleteModule: (progressId: number) => void;
   completeLoading: boolean;
   courseId: number;
+  assignmentId: number;
 }) {
   const queryClient = useQueryClient();
+
   const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
   const { data: videoData } = useModuleVideo(progress.module_id);
+
+  const updateVideoProgress = useUpdateModuleVideoProgress(assignmentId);
 
   const moduleVideo = videoData?.video || null;
 
@@ -465,12 +471,39 @@ function ModuleLearningItem({
     progress.status === "completed" ||
     progress.status === "in_progress" ||
     hasAttendanceForThisModule;
+
   const createSession = useCreateTrainingSession();
   const markAttendance = useMark();
 
   const [pdfOpen, setPdfOpen] = useState(false);
-
   const [hasReadPdf, setHasReadPdf] = useState(alreadyCompletedReading);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const lastSyncedPercentRef = useRef(
+    Number(progress.video_watched_percent ?? 0),
+  );
+
+  const VIDEO_REQUIRED_PERCENT = 70;
+
+  const [videoPercent, setVideoPercent] = useState(
+    Number(progress.video_watched_percent ?? 0),
+  );
+
+  const [hasCompletedVideo, setHasCompletedVideo] = useState(
+    progress.status === "completed" ||
+      Number(progress.video_watched_percent ?? 0) >= VIDEO_REQUIRED_PERCENT,
+  );
+
+  const hasVideo = Boolean(moduleVideo?.video_url);
+  const hasPdf = Boolean(pdf);
+
+  const learningCompleted = hasVideo
+    ? hasCompletedVideo
+    : hasPdf
+      ? hasReadPdf
+      : true;
+
+  const canStartQuiz = learningCompleted;
 
   useEffect(() => {
     if (alreadyCompletedReading) {
@@ -478,7 +511,89 @@ function ModuleLearningItem({
     }
   }, [alreadyCompletedReading]);
 
-  const canStartQuiz = hasReadPdf || !pdf;
+  useEffect(() => {
+    const backendPercent = Number(progress.video_watched_percent ?? 0);
+
+    setVideoPercent(backendPercent);
+    lastSyncedPercentRef.current = backendPercent;
+
+    if (
+      progress.status === "completed" ||
+      backendPercent >= VIDEO_REQUIRED_PERCENT
+    ) {
+      setHasCompletedVideo(true);
+    }
+  }, [progress.status, progress.video_watched_percent]);
+
+  const getVideoPayload = () => {
+    const video = videoRef.current;
+
+    if (!video || !video.duration || Number.isNaN(video.duration)) {
+      return null;
+    }
+
+    const watchedSeconds = Math.floor(video.currentTime);
+    const durationSeconds = Math.floor(video.duration);
+
+    if (durationSeconds <= 0) {
+      return null;
+    }
+
+    const safeWatchedSeconds = Math.min(
+      Math.max(watchedSeconds, 0),
+      durationSeconds,
+    );
+
+    const percent = Math.floor((safeWatchedSeconds / durationSeconds) * 100);
+
+    const safePercent = Math.min(Math.max(percent, 0), 100);
+
+    return {
+      watchedSeconds: safeWatchedSeconds,
+      durationSeconds,
+      safePercent,
+    };
+  };
+
+  const syncVideoProgress = (force = false) => {
+    const payload = getVideoPayload();
+
+    if (!payload) {
+      return;
+    }
+
+    const { watchedSeconds, durationSeconds, safePercent } = payload;
+
+    setVideoPercent(safePercent);
+
+    if (safePercent >= VIDEO_REQUIRED_PERCENT && !hasCompletedVideo) {
+      setHasCompletedVideo(true);
+      message.success("70% video completed. You can mark this module as done.");
+    }
+
+    const shouldSync =
+  force ||
+  safePercent >= lastSyncedPercentRef.current + 10 ||
+  (safePercent >= 70 && lastSyncedPercentRef.current < 70);
+
+    if (!shouldSync || updateVideoProgress.isPending) {
+      return;
+    }
+
+    lastSyncedPercentRef.current = safePercent;
+
+    updateVideoProgress.mutate({
+      progressId: progress.id,
+      payload: {
+        watched_seconds: watchedSeconds,
+        duration_seconds: durationSeconds,
+      },
+    });
+  };
+
+  const handleVideoProgress = () => {
+    syncVideoProgress(false);
+  };
 
   const getMaxAttempts = (quiz: Assessment) => {
     return quiz.rule?.max_attempts ?? 1;
@@ -502,6 +617,7 @@ function ModuleLearningItem({
 
     const checkIn = new Date();
     const checkOut = new Date(checkIn.getTime() + 60 * 1000);
+
     createSession.mutate(
       {
         course_id: courseId,
@@ -541,7 +657,7 @@ function ModuleLearningItem({
               },
             },
             {
-              onSuccess: async() => {
+              onSuccess: async () => {
                 await queryClient.invalidateQueries({
                   queryKey: ["attendance-by-user", userId],
                 });
@@ -549,6 +665,7 @@ function ModuleLearningItem({
                 await queryClient.invalidateQueries({
                   queryKey: ["attendance-summary", userId],
                 });
+
                 setHasReadPdf(true);
                 setPdfOpen(false);
                 message.success("Reading completed. You can start the test.");
@@ -584,42 +701,92 @@ function ModuleLearningItem({
                 {moduleStatus(progress)}
               </Tag>
 
-              {moduleVideo?.video_url ? (
+              {hasVideo ? (
                 <Tag color="purple">Video available</Tag>
               ) : (
                 <Tag color="orange">No video</Tag>
               )}
 
-              {pdf ? (
+              {hasPdf ? (
                 <Tag color="blue">PDF available</Tag>
               ) : (
                 <Tag color="orange">No PDF</Tag>
               )}
+
+              {hasVideo && (
+                <Tag color={hasCompletedVideo ? "green" : "gold"}>
+                  Video: {videoPercent}%
+                </Tag>
+              )}
+
+              {learningCompleted ? (
+                <Tag color="green">Learning unlocked</Tag>
+              ) : (
+                <Tag color="red">Learning pending</Tag>
+              )}
             </div>
 
             <div className="text-base font-semibold text-slate-900">
-              {module?.module_title ?? `Module ${progress.module_id}`}
+              {moduleTitle}
             </div>
 
             <div className="mt-1 text-sm text-slate-500">
               Complete the learning material before starting the assessment.
             </div>
 
-            {moduleVideo?.video_url && (
-              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950">
-                <div className="relative aspect-video w-full bg-black">
-                  <video
-                    src={moduleVideo.video_url}
-                    poster={pdf?.thumbnail_url}
-                    controls
-                    preload="metadata"
-                    className="absolute inset-0 h-full w-full object-contain"
-                  />
+            {hasVideo && (
+              <Card
+                className="mt-4 overflow-hidden rounded-2xl border border-slate-200 shadow-sm"
+                bodyStyle={{ padding: 0 }}
+              >
+                <div className="bg-slate-950">
+                  <div className="relative aspect-video w-full bg-black">
+                    <video
+                      ref={videoRef}
+                      src={moduleVideo.video_url}
+                      poster={pdf?.thumbnail_url}
+                      controls
+                      controlsList="nodownload"
+                      preload="metadata"
+                      onTimeUpdate={handleVideoProgress}
+                      onLoadedMetadata={handleVideoProgress}
+                      onPause={() => syncVideoProgress(true)}
+                      onEnded={() => syncVideoProgress(true)}
+                      className="absolute inset-0 h-full w-full object-contain"
+                    />
+                  </div>
+
+                  <div className="border-t border-slate-800 bg-slate-950 px-4 py-3 text-white">
+                    <div className="mb-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="min-w-0">
+                        <div className="truncate text-base font-semibold">
+                          {moduleTitle}
+                        </div>
+
+                        <div className="mt-1 text-xs text-slate-400">
+                          Watch at least {VIDEO_REQUIRED_PERCENT}% of this video
+                          to unlock module completion.
+                        </div>
+                      </div>
+
+                      <Tag color={hasCompletedVideo ? "green" : "purple"}>
+                        {hasCompletedVideo
+                          ? "Video completed"
+                          : `${videoPercent}% watched`}
+                      </Tag>
+                    </div>
+
+                    <Progress
+                      percent={Math.min(videoPercent, 100)}
+                      size="small"
+                      status={hasCompletedVideo ? "success" : "active"}
+                    />
+                  </div>
                 </div>
-              </div>
+              </Card>
             )}
 
-            {!pdf?.thumbnail_url && moduleVideo?.video_url && (
+            {!pdf?.thumbnail_url && hasVideo && (
               <div className="mt-2 text-xs text-slate-400">
                 No thumbnail uploaded for this module.
               </div>
@@ -627,7 +794,7 @@ function ModuleLearningItem({
           </div>
 
           <Space wrap className="lg:justify-end">
-            {pdf ? (
+            {hasPdf ? (
               <Button icon={<BookOutlined />} onClick={() => setPdfOpen(true)}>
                 Open PDF
               </Button>
@@ -637,15 +804,19 @@ function ModuleLearningItem({
 
             <Button
               type={progress.status === "completed" ? "default" : "primary"}
-              disabled={progress.status === "completed" || !hasReadPdf}
+              disabled={progress.status === "completed" || !learningCompleted}
               loading={completeLoading}
               onClick={() => onCompleteModule(progress.id)}
             >
               {progress.status === "completed"
                 ? "Completed"
-                : hasReadPdf
+                : learningCompleted
                   ? "Mark complete"
-                  : "Read PDF first"}
+                  : hasVideo
+                    ? `Watch ${VIDEO_REQUIRED_PERCENT}% video first`
+                    : hasPdf
+                      ? "Read PDF first"
+                      : "Mark complete"}
             </Button>
           </Space>
         </div>
@@ -683,7 +854,11 @@ function ModuleLearningItem({
               const buttonText = passed
                 ? `Quiz passed: ${quiz.assessment_title}`
                 : !canStartQuiz
-                  ? `Locked: ${quiz.assessment_title}`
+                  ? hasVideo
+                    ? `Locked: watch ${VIDEO_REQUIRED_PERCENT}% video first`
+                    : hasPdf
+                      ? "Locked: read PDF first"
+                      : `Locked: ${quiz.assessment_title}`
                   : attemptsFinished
                     ? `Attempts finished: ${quiz.assessment_title}`
                     : latest
@@ -968,21 +1143,35 @@ function TrainingCard({
             </div>
 
             <Timeline
-              items={progress.map((p) => {
+              mode="left"
+              items={progress.map((p, index) => {
                 const mod = modules.find((m) => m.module_id === p.module_id);
                 const quizzes = moduleAssessments(p.module_id);
 
+                const isCompleted = p.status === "completed";
+                const isInProgress = p.status === "in_progress";
+
                 return {
-                  color:
-                    p.status === "completed"
-                      ? "green"
-                      : p.status === "in_progress"
-                        ? "blue"
-                        : "gray",
+                  color: isCompleted ? "green" : isInProgress ? "blue" : "gray",
+                  dot: (
+                    <div
+                      className={[
+                        "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
+                        isCompleted
+                          ? "border-green-500 bg-green-50 text-green-700"
+                          : isInProgress
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-slate-300 bg-slate-50 text-slate-500",
+                      ].join(" ")}
+                    >
+                      {index + 1}
+                    </div>
+                  ),
                   children: (
                     <ModuleLearningItem
                       progress={p}
                       courseId={assignment.course_id}
+                      assignmentId={assignment.assignment_id}
                       module={mod}
                       quizzes={quizzes}
                       userId={userId}

@@ -239,6 +239,7 @@ const normalizeProgress = (row: any): ModuleProgress => ({
   status: row?.status ?? "pending",
   started_at: row?.started_at ?? row?.startedAt ?? null,
   completed_at: row?.completed_at ?? row?.completedAt ?? null,
+  video_watched_percent:row?.video_watched_percent
 });
 
 const normalizeAssessment = (row: any): Assessment => {
@@ -722,6 +723,22 @@ export const api = {
       },
     ]);
   },
+
+ updateModuleVideoProgress: async (
+  progressId: number,
+  payload: {
+    watched_seconds: number;
+    duration_seconds: number;
+  },
+) => {
+  return await requestFirst<any>([
+    {
+      method: "PATCH",
+      url: `/api/module-progress/${progressId}/video-progress`,
+      data: payload,
+    },
+  ]);
+},
   getModuleDocuments: async (moduleId: number) => {
     return await requestFirst<any>([
       {

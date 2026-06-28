@@ -27,6 +27,7 @@ import {
   useUpdateEntity,
 } from "../../hooks/useEntities";
 import { CreateEntityPayload, Entity } from "../../types";
+import { primaryIconClass } from "../../common";
 
 const { Title, Text } = Typography;
 
@@ -158,7 +159,7 @@ export function EntitiesPage() {
       key: "entity_name",
       render: (value: string) => (
         <Space>
-          <ApartmentOutlined />
+          <ApartmentOutlined className={primaryIconClass} />
           <Text strong>{value}</Text>
         </Space>
       ),
@@ -167,13 +168,21 @@ export function EntitiesPage() {
       title: "Type",
       dataIndex: "entity_type",
       key: "entity_type",
-      render: (value: string) => value || "-",
+      render: (value: string) => (
+        <Space>
+          <Text>{value}</Text>
+        </Space>
+      ),
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (value: string) => value || "-",
+      render: (value: string) => (
+        <Space>
+          <Text>{value}</Text>
+        </Space>
+      ),
     },
     {
       title: "Status",

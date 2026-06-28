@@ -84,7 +84,9 @@ export interface ModuleProgress {
   status: "pending" | "in_progress" | "completed";
   started_at?: string | null;
   completed_at?: string | null;
+  video_watched_percent:number
 }
+
 export type Assessment = {
   assessment_id: number;
   course_id: number;

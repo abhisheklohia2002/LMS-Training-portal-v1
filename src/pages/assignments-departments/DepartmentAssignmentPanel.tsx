@@ -8,6 +8,7 @@ import {
   message,
   Table,
   Tag,
+  Space,
 } from "antd";
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
@@ -18,6 +19,7 @@ import {
   useAssignCourseToDepartment,
   useDepartmentAssignments,
 } from "../../hooks/useDepartmentAssignments";
+import Text from "antd/es/typography/Text";
 
 export function DepartmentAssignmentPanel() {
   const [form] = Form.useForm();
@@ -180,22 +182,38 @@ export function DepartmentAssignmentPanel() {
         columns={[
           {
             title: "Department",
-            render: (_: unknown, record: any) =>
-              record.department?.department_name || "-",
+            render: (_: unknown, record: any) => (
+              <Space>
+                <Text>{record.department?.department_name || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "User",
-            render: (_: unknown, record: any) =>
-              record.user?.name || record.user?.full_name || "-",
+            render: (_: unknown, record: any) => (
+              <Space>
+                <Text>
+                  {record.user?.name || record.user?.full_name || "-"}
+                </Text>
+              </Space>
+            ),
           },
           {
             title: "Course",
-            render: (_: unknown, record: any) =>
-              record.course?.course_title || "-",
+            render: (_: unknown, record: any) => (
+              <Space>
+                <Text>{record.course?.course_title || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "Source",
             dataIndex: "assignment_source",
+            render: (_: unknown, record: any) => (
+              <Space>
+                <Text>{record.assignment_source || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "Mandatory",

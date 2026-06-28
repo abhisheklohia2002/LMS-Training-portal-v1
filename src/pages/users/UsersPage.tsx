@@ -32,6 +32,8 @@ import { useRoles } from "../../hooks/useRoles";
 import { useDepartments } from "../../hooks/useDepartments";
 
 import { findRole } from "../../utils/lookup";
+import Text from "antd/es/typography/Text";
+import { iconClass } from "../../common";
 
 type Role = {
   role_id?: number;
@@ -248,31 +250,26 @@ export function UsersPage() {
     return false;
   };
   const handleDownloadTemplate = () => {
-  const response = filteredUsers.map((elem: User) => {
-    return {
-      Full_Name: elem.full_name || elem.name || "",
-      Email: elem.email,
-      Employee_code: elem.employee_code || "",
-      Role: findRole(roles, elem.role_id)?.role_name || "",
-      Department:
-        elem.department?.department_name ||
-        "",
-      Status: elem.status,
-    };
-  });
+    const response = filteredUsers.map((elem: User) => {
+      return {
+        Full_Name: elem.full_name || elem.name || "",
+        Email: elem.email,
+        Employee_code: elem.employee_code || "",
+        Role: findRole(roles, elem.role_id)?.role_name || "",
+        Department: elem.department?.department_name || "",
+        Status: elem.status,
+      };
+    });
 
-  const worksheet = XLSX.utils.json_to_sheet(response);
-  const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(response);
+    const workbook = XLSX.utils.book_new();
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
 
-  const time = new Date();
+    const time = new Date();
 
-  XLSX.writeFile(
-    workbook,
-    `User-list-${String(time.getTime())}.xlsx`,
-  );
-};
+    XLSX.writeFile(workbook, `User-list-${String(time.getTime())}.xlsx`);
+  };
 
   return (
     <>
@@ -325,25 +322,49 @@ export function UsersPage() {
         columns={[
           {
             title: "Name",
-            render: (_: unknown, r: User) => r.full_name || r.name || "-",
+            render: (_: unknown, r: User) => (
+              <Space>
+                <Text>{r.full_name || r.name || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "Email",
             dataIndex: "email",
+
+            render: (_: unknown, r: User) => (
+              <Space>
+                <Text>{r.email || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "Employee Code",
             dataIndex: "employee_code",
+            render: (_: unknown, r: User) => (
+              <Space>
+                <Text>{r.employee_code || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "Role",
-            render: (_: unknown, r: User) =>
-              findRole(roles, r.role_id)?.role_name || "-",
+            render: (_: unknown, r: User) => (
+              <Space>
+                <Text>{findRole(roles, r.role_id)?.role_name || "-"}</Text>
+              </Space>
+            ),
           },
           {
             title: "Department",
             render: (_: unknown, r: any) => {
-              return r.department?.department_name || r.department?.name || "-";
+              return (
+                <Space>
+                  <Text>
+                    {r.department?.department_name || r.department?.name || "-"}
+                  </Text>
+                </Space>
+              );
             },
           },
           {
@@ -413,6 +434,7 @@ export function UsersPage() {
                 bulkResult.errors.length > 0 && (
                   <Table
                     size="small"
+                    className="rounded-xl border border-slate-200 dark:border-[#253249]"
                     rowKey={(_, index) => String(index)}
                     pagination={{
                       pageSize: 5,
@@ -422,23 +444,35 @@ export function UsersPage() {
                       {
                         title: "Row",
                         dataIndex: "row",
+                        render: (value: number) => <Text strong>{value}</Text>,
                       },
                       {
                         title: "Email",
                         dataIndex: "email",
+                        render: (value: string) => (
+                          <Text className="break-all">{value || "-"}</Text>
+                        ),
                       },
                       {
                         title: "Employee Code",
                         dataIndex: "employeeId",
-                        render: (_: unknown, record: any) =>
-                          record.employeeId ||
-                          record.empId ||
-                          record.employee_code ||
-                          "-",
+                        render: (_: unknown, record: any) => (
+                          <Text>
+                            {record.employeeId ||
+                              record.empId ||
+                              record.employee_code ||
+                              "-"}
+                          </Text>
+                        ),
                       },
                       {
                         title: "Error",
                         dataIndex: "message",
+                        render: (value: string) => (
+                          <Text type="danger" className="break-words">
+                            {value || "-"}
+                          </Text>
+                        ),
                       },
                     ]}
                   />

@@ -29,6 +29,7 @@ import {
 } from "../../hooks/useDepartments";
 import { CreateDepartmentPayload, Department, Entity } from "../../types";
 import { useBulkUploadUsersToDepartment } from "../../hooks/useDepartmentTrainingMappings";
+import { primaryIconClass } from "../../common";
 
 const { Title, Text } = Typography;
 
@@ -53,8 +54,9 @@ export function DepartmentsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] =
-    useState<Department | null>(null);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(
+    null,
+  );
 
   const [selectedUploadDepartment, setSelectedUploadDepartment] =
     useState<Department | null>(null);
@@ -110,9 +112,7 @@ export function DepartmentsPage() {
     }
   };
 
-  const handleUserFileUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleUserFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -244,13 +244,8 @@ export function DepartmentsPage() {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      render: (value: number) => {
-        return (
-          <Space>
-            <Text strong>{value}</Text>
-          </Space>
-        );
-      },
+      width: 80,
+      render: (value: number) => <Text strong>{value}</Text>,
     },
     {
       title: "Department",
@@ -258,7 +253,7 @@ export function DepartmentsPage() {
       key: "department_name",
       render: (value: string) => (
         <Space>
-          <TeamOutlined />
+          <TeamOutlined className={primaryIconClass} />
           <Text strong>{value}</Text>
         </Space>
       ),
@@ -267,14 +262,17 @@ export function DepartmentsPage() {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      render: (value: string) => value || "-",
+      render: (value: string) => (
+        <Text type={value ? undefined : "secondary"}>{value || "-"}</Text>
+      ),
     },
     {
       title: "Entity",
       dataIndex: "entity",
       key: "entity",
-      render: (_: unknown, record: Department) =>
-        record.entity?.entity_name || record.entity_id || "-",
+      render: (_: unknown, record: Department) => (
+        <Text>{record.entity?.entity_name || record.entity_id || "-"}</Text>
+      ),
     },
     {
       title: "Status",
@@ -292,7 +290,7 @@ export function DepartmentsPage() {
       key: "actions",
       width: 340,
       render: (_: unknown, record: Department) => (
-        <Space>
+        <Space wrap>
           <Button
             size="small"
             icon={<UploadOutlined />}

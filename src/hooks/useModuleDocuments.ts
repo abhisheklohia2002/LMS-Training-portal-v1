@@ -28,3 +28,29 @@ export function useModuleVideo(moduleId: number) {
     enabled: !!moduleId,
   });
 }
+
+
+export function useUpdateModuleVideoProgress(assignmentId?: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      progressId,
+      payload,
+    }: {
+      progressId: number;
+      payload: {
+        watched_seconds: number;
+        duration_seconds: number;
+      };
+    }) => api.updateModuleVideoProgress(progressId, payload),
+
+    onSuccess: () => {
+      if (assignmentId) {
+        queryClient.invalidateQueries({
+          queryKey: ["module-progress", assignmentId],
+        });
+      }
+    },
+  });
+}

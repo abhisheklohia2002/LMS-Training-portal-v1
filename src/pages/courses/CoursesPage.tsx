@@ -31,6 +31,8 @@ import {
   useUpdateCourse,
 } from "../../hooks/useCourses";
 import { CourseDetail } from "../../components/course-management/CourseDetail";
+import { iconClass, primaryIconClass } from "../../common";
+import Text from "antd/es/typography/Text";
 
 function formatDuration(minutes?: number) {
   if (!minutes) return "0 min";
@@ -170,7 +172,9 @@ export function CoursesPage() {
         dataSource={data}
         expandable={{
           expandedRowRender: (r: any) => (
-            <CourseDetail courseId={r.course_id} />
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#253249] dark:bg-[#0F172A]">
+              <CourseDetail courseId={r.course_id} />
+            </div>
           ),
         }}
         columns={[
@@ -180,54 +184,29 @@ export function CoursesPage() {
             width: 120,
             render: (thumbnailUrl: string) => {
               if (!thumbnailUrl) {
-                return "-";
+                return <Text type="secondary">-</Text>;
               }
 
               return (
-                <div
-                  style={{
-                    position: "relative",
-                    width: 80,
-                    height: 50,
-                    display: "inline-block",
-                  }}
-                >
+                <div className="relative inline-block h-[50px] w-[80px] overflow-hidden rounded-lg bg-slate-100 dark:bg-[#162238]">
                   <Image
                     src={thumbnailUrl}
                     alt="Course thumbnail"
                     width={80}
                     height={50}
-                    style={{
-                      objectFit: "cover",
-                      borderRadius: 8,
-                      display: "block",
-                    }}
+                    className="block rounded-lg object-cover"
                     preview={false}
                   />
 
                   <Button
                     size="small"
                     shape="circle"
-                    icon={<EyeOutlined />}
+                    icon={<EyeOutlined className={primaryIconClass} />}
                     onClick={() => {
                       setPreviewImage(thumbnailUrl);
                       setPreviewOpen(true);
                     }}
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      width: 24,
-                      height: 24,
-                      minWidth: 24,
-                      padding: 0,
-                      background: "rgba(255, 255, 255, 0.92)",
-                      border: "none",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                    className="absolute right-1 top-1 flex h-6 w-6 min-w-6 items-center justify-center border-none bg-white/90 p-0 shadow dark:bg-[#0F172A]/90"
                   />
                 </div>
               );
@@ -236,32 +215,39 @@ export function CoursesPage() {
           {
             title: "Course",
             dataIndex: "course_title",
+            render: (value: string) => <Text>{value || "-"}</Text>,
           },
           {
             title: "Type",
             dataIndex: "course_type",
-            render: (v: string) => <Tag>{v}</Tag>,
+            render: (value: string) => <Tag color="blue">{value || "-"}</Tag>,
           },
           {
             title: "Duration",
             dataIndex: "total_duration_minutes",
-            render: (v: number) => (
-              <Tooltip title={`${v || 0} minutes`}>
-                <Tag icon={<ClockCircleOutlined />}>{formatDuration(v)}</Tag>
+            render: (value: number) => (
+              <Tooltip title={`${value || 0} minutes`}>
+                <Tag icon={<ClockCircleOutlined className={iconClass} />}>
+                  {formatDuration(value)}
+                </Tag>
               </Tooltip>
             ),
           },
           {
             title: "Status",
-            render: (_: unknown, r: any) => <StatusTag value={r.is_active} />,
+            render: (_: unknown, record: any) => (
+              <StatusTag value={record.is_active} />
+            ),
           },
           {
             title: "Action",
-            render: (_: unknown, r: any) => (
+            width: 120,
+            render: (_: unknown, record: any) => (
               <Button
-                icon={<EditOutlined />}
+                icon={<EditOutlined className={iconClass} />}
                 size="small"
-                onClick={() => handleEdit(r)}
+                onClick={() => handleEdit(record)}
+                className="dark:border-[#253249] dark:bg-[#111C2E] dark:text-[#EAF0F7]"
               >
                 Edit
               </Button>
