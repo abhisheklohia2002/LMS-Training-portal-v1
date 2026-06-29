@@ -174,6 +174,10 @@ function AppContent() {
           Upload: {
             colorText: isDarkMode ? "#EAF0F7" : "#111827",
           },
+          Typography: {
+            colorText: isDarkMode ? "#EAF0F7" : "#111827",
+            colorTextHeading: isDarkMode ? "#EAF0F7" : "#111827",
+          },
         },
       }}
     >
