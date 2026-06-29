@@ -190,6 +190,7 @@ export function CoursesPage() {
       />
 
       <Table
+        rowKey="course_id"
         className={[
           "course-table-theme",
           isDarkMode ? "course-table-theme-dark" : "course-table-theme-light",
