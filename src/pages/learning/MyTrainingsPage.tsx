@@ -1,5 +1,6 @@
 import {
   Alert,
+  Breadcrumb,
   Button,
   Card,
   Checkbox,
@@ -118,6 +119,40 @@ function formatDuration(minutes?: number) {
   return `${mins}m`;
 }
 
+function getDueDateStatus(value?: any) {
+  if (!value) {
+    return {
+      label: "No due date",
+      color: "default",
+    };
+  }
+
+  const dueDate = new Date(value);
+  const today = new Date();
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return {
+      label: "No due date",
+      color: "default",
+    };
+  }
+
+  // Compare only date, not time
+  dueDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  if (dueDate < today) {
+    return {
+      label: "Expired",
+      color: "red",
+    };
+  }
+
+  return {
+    label: "Active",
+    color: "green",
+  };
+}
 function QuizModal({
   assessment,
   userId,
@@ -998,6 +1033,7 @@ function TrainingCard({
   const { isDarkMode } = useThemeMode();
 
   const ui = {
+     
     card: isDarkMode
       ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
       : "border-slate-200 bg-white text-slate-900",
@@ -1206,17 +1242,14 @@ function TrainingCard({
 
         {/* <AttendanceSummary attendances={attendance} /> */}
 
-        {
-        
-        progress.length === 0 ? (
+        {progress.length === 0 ? (
           <Alert
             type="info"
             showIcon
             message="No accessible modules yet"
             description="Ask your manager to assign this course again after modules are created, or generate module progress for this assignment."
           />
-        )
-         : (
+        ) : (
           <div>
             <div className="mb-3 flex items-center justify-between">
               <div>
@@ -1359,6 +1392,7 @@ export function MyTrainingsPage() {
   const { isDarkMode } = useThemeMode();
 
   const ui = {
+       breadcrumb: isDarkMode ? "text-slate-400" : "text-slate-500",
     page: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
 
     accordion: isDarkMode
@@ -1379,6 +1413,23 @@ export function MyTrainingsPage() {
 
   return (
     <>
+
+      <div className="mb-3">
+        <Breadcrumb
+          className={ui.breadcrumb}
+          items={[
+            {
+              title: "Dashboard",
+            },
+            {
+              title: "Learning",
+            },
+            {
+              title: "My Trainings",
+            },
+          ]}
+        />
+      </div>
       <PageHeader
         title="My Trainings"
         subtitle="Continue your assigned learning path."
@@ -1403,7 +1454,7 @@ export function MyTrainingsPage() {
           // defaultActiveKey={[String(mine[0]?.assignment_id)]}
           items={mine.map((assignment) => {
             const course = getCourse(assignment.course_id);
-
+            const dueStatus = getDueDateStatus(assignment.due_date);
             return {
               key: String(assignment.assignment_id),
               label: (
@@ -1444,6 +1495,8 @@ export function MyTrainingsPage() {
                           <Tag color="orange">
                             Due: {formatDate(assignment.due_date)}
                           </Tag>
+
+                          <Tag color={dueStatus.color}>{dueStatus.label}</Tag>
 
                           {assignment.is_mandatory && (
                             <Tag color="red">Mandatory</Tag>

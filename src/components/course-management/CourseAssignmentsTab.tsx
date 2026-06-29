@@ -15,7 +15,21 @@ import Text from "antd/es/typography/Text";
 type Props = {
   courseId: number;
 };
+function formatDueDate(value?: string) {
+  if (!value) return "No due date";
 
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 export function CourseAssignmentsTab({ courseId }: Props) {
 
    const { isDarkMode } = useThemeMode();
@@ -71,9 +85,9 @@ export function CourseAssignmentsTab({ courseId }: Props) {
           {
             title: "Due date",
             dataIndex: "due_date",
-            render: (text: string) =>(
+            render: (_,record:any ) =>(
                 <Text className={ui.text}>
-                  {text}
+                  {formatDueDate(record.due_date)}
                 </Text> 
               )
           },
