@@ -34,6 +34,7 @@ import { useDepartments } from "../../hooks/useDepartments";
 import { findRole } from "../../utils/lookup";
 import Text from "antd/es/typography/Text";
 import { iconClass } from "../../common";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 type Role = {
   role_id?: number;
@@ -80,6 +81,21 @@ type userResponseXls = {
 };
 
 export function UsersPage() {
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+    muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+
+    modalTable: isDarkMode
+      ? "rounded-xl border border-[#253249]"
+      : "rounded-xl border border-slate-200",
+
+    actionWrapper: isDarkMode
+      ? "rounded-2xl border border-[#253249] bg-[#111C2E] p-3"
+      : "rounded-2xl border border-slate-200 bg-white p-3",
+  };
+
   const { data, isLoading } = useUsers();
   const { data: roles } = useRoles();
   const { data: departmentsData, isLoading: departmentsLoading } =
@@ -277,7 +293,9 @@ export function UsersPage() {
         title="User Management"
         subtitle="Search, create and manage learners, managers and admins."
         actions={
-          <Space>
+          <div
+            className={`flex flex-wrap items-center gap-2 ${ui.actionWrapper}`}
+          >
             <Select
               allowClear
               placeholder="Filter by department"
@@ -312,11 +330,11 @@ export function UsersPage() {
             <Button type="primary" onClick={openCreateDrawer}>
               Create user
             </Button>
-          </Space>
+          </div>
         }
       />
 
-      <DataTable
+      <Table
         loading={isLoading}
         dataSource={filteredUsers}
         columns={[
@@ -324,7 +342,7 @@ export function UsersPage() {
             title: "Name",
             render: (_: unknown, r: User) => (
               <Space>
-                <Text>{r.full_name || r.name || "-"}</Text>
+                <Text className={ui.text}>{r.full_name || r.name || "-"}</Text>
               </Space>
             ),
           },
@@ -334,7 +352,7 @@ export function UsersPage() {
 
             render: (_: unknown, r: User) => (
               <Space>
-                <Text>{r.email || "-"}</Text>
+                <Text className={ui.text}>{r.email || "-"}</Text>
               </Space>
             ),
           },
@@ -343,7 +361,7 @@ export function UsersPage() {
             dataIndex: "employee_code",
             render: (_: unknown, r: User) => (
               <Space>
-                <Text>{r.employee_code || "-"}</Text>
+                <Text className={ui.text}>{r.employee_code || "-"}</Text>
               </Space>
             ),
           },
@@ -351,7 +369,9 @@ export function UsersPage() {
             title: "Role",
             render: (_: unknown, r: User) => (
               <Space>
-                <Text>{findRole(roles, r.role_id)?.role_name || "-"}</Text>
+                <Text className={ui.text}>
+                  {findRole(roles, r.role_id)?.role_name || "-"}
+                </Text>
               </Space>
             ),
           },
@@ -360,7 +380,7 @@ export function UsersPage() {
             render: (_: unknown, r: any) => {
               return (
                 <Space>
-                  <Text>
+                  <Text className={ui.text}>
                     {r.department?.department_name || r.department?.name || "-"}
                   </Text>
                 </Space>
@@ -434,7 +454,7 @@ export function UsersPage() {
                 bulkResult.errors.length > 0 && (
                   <Table
                     size="small"
-                    className="rounded-xl border border-slate-200 dark:border-[#253249]"
+                    className={ui.modalTable}
                     rowKey={(_, index) => String(index)}
                     pagination={{
                       pageSize: 5,
@@ -444,20 +464,26 @@ export function UsersPage() {
                       {
                         title: "Row",
                         dataIndex: "row",
-                        render: (value: number) => <Text strong>{value}</Text>,
+                        render: (value: number) => (
+                          <Text strong className={ui.text}>
+                            {value}
+                          </Text>
+                        ),
                       },
                       {
                         title: "Email",
                         dataIndex: "email",
                         render: (value: string) => (
-                          <Text className="break-all">{value || "-"}</Text>
+                          <Text className={`break-all ${ui.text}`}>
+                            {value || "-"}
+                          </Text>
                         ),
                       },
                       {
                         title: "Employee Code",
                         dataIndex: "employeeId",
                         render: (_: unknown, record: any) => (
-                          <Text>
+                          <Text className={ui.text}>
                             {record.employeeId ||
                               record.empId ||
                               record.employee_code ||

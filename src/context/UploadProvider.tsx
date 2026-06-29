@@ -10,6 +10,7 @@ import React, {
 import { Progress, Button, message } from "antd";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
+import { useThemeMode } from "./ThemeProvider/ThemeProvider";
 
 type UploadKind = "pdf" | "video";
 
@@ -57,16 +58,12 @@ type UploadContextValue = {
   removeUpload: (localId: string) => void;
 };
 
-
 const UPLOAD_STORAGE_KEY = "lms_active_uploads";
 
 function saveUploadsToStorage(uploads: UploadItem[]) {
   const restorableUploads = uploads.filter((item) => item.taskId);
 
-  localStorage.setItem(
-    UPLOAD_STORAGE_KEY,
-    JSON.stringify(restorableUploads),
-  );
+  localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(restorableUploads));
 }
 
 function loadUploadsFromStorage(): UploadItem[] {
@@ -84,8 +81,8 @@ const UploadContext = createContext<UploadContextValue | null>(null);
 
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const [uploads, setUploads] = useState<UploadItem[]>(() =>
-  loadUploadsFromStorage(),
-);
+    loadUploadsFromStorage(),
+  );
   const timers = useRef<Record<string, number>>({});
   const queryClient = useQueryClient();
 
@@ -400,36 +397,36 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     setUploads((prev) => prev.filter((item) => item.localId !== localId));
   };
   useEffect(() => {
-  saveUploadsToStorage(uploads);
-}, [uploads]);
+    saveUploadsToStorage(uploads);
+  }, [uploads]);
 
-useEffect(() => {
-  uploads.forEach((item) => {
-    if (!item.taskId) return;
+  useEffect(() => {
+    uploads.forEach((item) => {
+      if (!item.taskId) return;
 
-    if (item.status === "completed" || item.status === "failed") {
-      return;
-    }
+      if (item.status === "completed" || item.status === "failed") {
+        return;
+      }
 
-    if (item.kind === "video") {
-      pollVideoTask({
-        localId: item.localId,
-        taskId: item.taskId,
-        courseId: item.courseId,
-        moduleId: item.moduleId,
-      });
-    }
+      if (item.kind === "video") {
+        pollVideoTask({
+          localId: item.localId,
+          taskId: item.taskId,
+          courseId: item.courseId,
+          moduleId: item.moduleId,
+        });
+      }
 
-    if (item.kind === "pdf") {
-      pollPDFTask({
-        localId: item.localId,
-        taskId: item.taskId,
-        courseId: item.courseId,
-        moduleId: item.moduleId,
-      });
-    }
-  });
-}, []);
+      if (item.kind === "pdf") {
+        pollPDFTask({
+          localId: item.localId,
+          taskId: item.taskId,
+          courseId: item.courseId,
+          moduleId: item.moduleId,
+        });
+      }
+    });
+  }, []);
 
   return (
     <UploadContext.Provider
@@ -456,44 +453,78 @@ export function useUploadManager() {
   return context;
 }
 
+
 function GlobalUploadWidget() {
   const { uploads, removeUpload } = useUploadManager();
+  const { isDarkMode } = useThemeMode();
 
   if (!uploads.length) return null;
 
+  const ui = {
+    wrapper: {
+      position: "fixed" as const,
+      right: 20,
+      bottom: 20,
+      width: 360,
+      background: isDarkMode ? "#111C2E" : "#FFFFFF",
+      border: `1px solid ${isDarkMode ? "#253249" : "#E5E7EB"}`,
+      borderRadius: 12,
+      padding: 14,
+      boxShadow: isDarkMode
+        ? "0 10px 35px rgba(0,0,0,0.45)"
+        : "0 10px 35px rgba(0,0,0,0.18)",
+      zIndex: 9999,
+      color: isDarkMode ? "#EAF0F7" : "#111827",
+    },
+
+    title: {
+      color: isDarkMode ? "#EAF0F7" : "#111827",
+    },
+
+    item: {
+      marginTop: 12,
+      borderTop: `1px solid ${isDarkMode ? "#253249" : "#EEF2F7"}`,
+      paddingTop: 12,
+    },
+
+    fileName: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: isDarkMode ? "#EAF0F7" : "#111827",
+      wordBreak: "break-word" as const,
+    },
+
+    message: {
+      fontSize: 12,
+      color: isDarkMode ? "#94A3B8" : "#666666",
+      marginBottom: 6,
+      marginTop: 4,
+    },
+
+    dismissButton: isDarkMode
+      ? "border-[#253249] bg-[#0F172A] text-[#EAF0F7] hover:!border-[#22C7B8] hover:!text-[#22C7B8]"
+      : "border-slate-300 bg-white text-slate-700 hover:!border-[#109B9C] hover:!text-[#109B9C]",
+  };
+
   return (
-    <div
-      style={{
-        position: "fixed",
-        right: 20,
-        bottom: 20,
-        width: 360,
-        background: "#fff",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: 14,
-        boxShadow: "0 10px 35px rgba(0,0,0,0.18)",
-        zIndex: 9999,
-      }}
-    >
-      <strong>Uploads</strong>
+    <div style={ui.wrapper}>
+      <strong style={ui.title}>Uploads</strong>
 
       {uploads.map((item) => (
-        <div key={item.localId} style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
+        <div key={item.localId} style={ui.item}>
+          <div style={ui.fileName}>
             <strong>
               {item.kind === "pdf" ? "PDF Upload" : "Video Upload"}
             </strong>
             : {item.fileName}
           </div>
 
-          <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
-            {item.message}
-          </div>
+          <div style={ui.message}>{item.message}</div>
 
           <Progress
             percent={item.progress}
-            strokeColor={"#F86A5B"}
+            strokeColor={isDarkMode ? "#22C7B8" : "#F86A5B"}
+            trailColor={isDarkMode ? "#253249" : "#F1F5F9"}
             size="small"
             status={item.status === "failed" ? "exception" : "active"}
           />
@@ -501,6 +532,7 @@ function GlobalUploadWidget() {
           {(item.status === "completed" || item.status === "failed") && (
             <Button
               size="small"
+              className={ui.dismissButton}
               style={{ marginTop: 8 }}
               onClick={() => removeUpload(item.localId)}
             >

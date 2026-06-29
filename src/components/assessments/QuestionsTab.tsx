@@ -11,6 +11,7 @@ import {
   Radio,
   Select,
   Space,
+  Table,
   Tag,
   Upload,
   message,
@@ -28,6 +29,8 @@ import {
   useCreateAssessmentQuestion,
   useDeleteAssessmentQuestion,
 } from "../../hooks/useAssessmentQuestions";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import Text from "antd/es/typography/Text";
 
 type Assessment = {
   assessment_id: number;
@@ -53,6 +56,31 @@ type Props = {
 };
 
 export function QuestionsTab({ assessment }: Props) {
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    card: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+      : "border-slate-200 bg-white text-slate-900",
+
+    helperText: isDarkMode ? "text-slate-400" : "text-slate-500",
+
+    optionHeader: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+
+    actionButton: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7] hover:!border-[#22C7B8] hover:!text-[#22C7B8]"
+      : "border-slate-300 bg-white text-slate-700 hover:!border-[#109B9C] hover:!text-[#109B9C]",
+
+    dangerButton: isDarkMode
+      ? "border-red-500/50 bg-red-950/30 text-red-300 hover:!border-red-400 hover:!text-red-200"
+      : "",
+
+    optionRow: isDarkMode
+      ? "rounded-xl border border-[#253249] bg-[#0F172A] p-3"
+      : "rounded-xl border border-slate-200 bg-slate-50 p-3",
+    text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+  };
+
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm<QuestionFormValue>();
 
@@ -133,9 +161,7 @@ export function QuestionsTab({ assessment }: Props) {
     const cleanedOptions =
       values.question_type === "text"
         ? []
-        : (values.options ?? []).filter((option) =>
-            option.option_text?.trim(),
-          );
+        : (values.options ?? []).filter((option) => option.option_text?.trim());
 
     const payload = {
       ...values,
@@ -170,9 +196,12 @@ export function QuestionsTab({ assessment }: Props) {
   return (
     <Card
       size="small"
-      title={`Questions${assessment.assessment_title ? ` - ${assessment.assessment_title}` : ""}`}
+      className={ui.card}
+      title={`Questions${
+        assessment.assessment_title ? ` - ${assessment.assessment_title}` : ""
+      }`}
       extra={
-        <Space>
+        <Space wrap>
           <Upload
             accept=".xlsx"
             showUploadList={false}
@@ -210,6 +239,7 @@ export function QuestionsTab({ assessment }: Props) {
             <Button
               icon={<UploadOutlined />}
               loading={bulkUploadQuestions.isPending}
+              className={ui.actionButton}
             >
               Upload XLS
             </Button>
@@ -221,7 +251,7 @@ export function QuestionsTab({ assessment }: Props) {
         </Space>
       }
     >
-      <DataTable
+      <Table
         loading={isLoading}
         dataSource={questions}
         rowKey="question_id"
@@ -230,41 +260,52 @@ export function QuestionsTab({ assessment }: Props) {
             title: "Seq",
             dataIndex: "sequence_no",
             width: 80,
+            render: (value: string) => <Text className={ui.text}>{value}</Text>,
           },
           {
             title: "Question",
             dataIndex: "question_text",
+            render: (value: string) => <Text className={ui.text}>{value}</Text>,
           },
           {
             title: "Type",
-            render: (_, question: any) => <Tag>{question.question_type}</Tag>,
+            render: (_: unknown, question: any) => (
+              <Tag>{question.question_type}</Tag>
+            ),
           },
           {
             title: "Marks",
             dataIndex: "marks",
             width: 90,
+            render: (value: string) => <Text className={ui.text}>{value}</Text>,
           },
           {
             title: "Options",
-            render: (_, question: any) =>
-              question.question_type === "text"
-                ? "Text answer"
-                : question.options
-                    ?.map((option: any) => option.option_text)
-                    .join(", ") || "-",
+            render: (_: unknown, question: any) => (
+              <Text className={ui.text}>
+                {question.question_type === "text"
+                  ? "Text answer"
+                  : question.options
+                      ?.map((option: any) => option.option_text)
+                      .join(", ") || "-"}
+              </Text>
+            ),
           },
           {
             title: "Correct",
-            render: (_, question: any) =>
-              question.options
-                ?.filter((option: any) => option.is_correct)
-                .map((option: any) => option.option_text)
-                .join(", ") || "-",
+            render: (_: unknown, question: any) => (
+              <Text className={ui.text}>
+                {question.options
+                  ?.filter((option: any) => option.is_correct)
+                  .map((option: any) => option.option_text)
+                  .join(", ") || "-"}
+              </Text>
+            ),
           },
           {
             title: "Action",
             width: 100,
-            render: (_, question: any) => (
+            render: (_: unknown, question: any) => (
               <Popconfirm
                 title="Delete this question?"
                 okText="Delete"
@@ -290,7 +331,12 @@ export function QuestionsTab({ assessment }: Props) {
                   )
                 }
               >
-                <Button danger size="small" icon={<DeleteOutlined />} />
+                <Button
+                  danger
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  className={ui.dangerButton}
+                />
               </Popconfirm>
             ),
           },
@@ -369,10 +415,13 @@ export function QuestionsTab({ assessment }: Props) {
               {(fields, { add, remove }) => (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="font-medium">Options</div>
+                    <div className={`font-medium ${ui.optionHeader}`}>
+                      Options
+                    </div>
 
                     <Button
                       size="small"
+                      className={ui.actionButton}
                       onClick={() =>
                         add({
                           option_text: "",
@@ -387,7 +436,10 @@ export function QuestionsTab({ assessment }: Props) {
                   {fields.map((field) => (
                     <div
                       key={field.key}
-                      className="grid items-center gap-2 md:grid-cols-[1fr_140px_80px]"
+                      className={[
+                        "grid items-center gap-2 md:grid-cols-[1fr_140px_90px]",
+                        ui.optionRow,
+                      ].join(" ")}
                     >
                       <Form.Item
                         {...field}
@@ -429,13 +481,17 @@ export function QuestionsTab({ assessment }: Props) {
                         )}
                       </Form.Item>
 
-                      <Button danger onClick={() => remove(field.name)}>
+                      <Button
+                        danger
+                        onClick={() => remove(field.name)}
+                        className={ui.dangerButton}
+                      >
                         Remove
                       </Button>
                     </div>
                   ))}
 
-                  <div className="text-xs text-slate-500">
+                  <div className={`text-xs ${ui.helperText}`}>
                     For single choice / true-false, mark exactly one option
                     correct. For multiple choice, mark all correct answers.
                   </div>
@@ -453,7 +509,9 @@ export function QuestionsTab({ assessment }: Props) {
               Save question
             </Button>
 
-            <Button onClick={closeDrawer}>Cancel</Button>
+            <Button onClick={closeDrawer} className={ui.actionButton}>
+              Cancel
+            </Button>
           </Space>
         </Form>
       </Drawer>

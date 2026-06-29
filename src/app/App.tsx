@@ -71,23 +71,54 @@ function AppContent() {
         components: {
           Layout: {
             headerBg: isDarkMode ? "#0F172A" : "#FFFFFF",
-            siderBg: isDarkMode ? "#07111F" : "#07111F",
+            siderBg: isDarkMode ? "#07111F" : "#FFFFFF",
             bodyBg: isDarkMode ? "#0B1220" : "#F4F7FB",
           },
-          Menu: {
-            darkItemBg: "#07111F",
-            darkSubMenuItemBg: "#07111F",
-            darkItemSelectedBg: "#22C7B8",
-            darkItemSelectedColor: "#031B1A",
-            darkItemColor: "#A8B3C7",
-            darkItemHoverColor: "#FFFFFF",
-          },
+
+          Menu: isDarkMode
+            ? {
+                darkItemBg: "#07111F",
+                darkSubMenuItemBg: "#07111F",
+
+                darkItemColor: "#A8B3C7",
+                darkItemHoverColor: "#FFFFFF",
+                darkItemHoverBg: "#111C2E",
+
+                darkItemSelectedBg: "#22C7B8",
+                darkItemSelectedColor: "#031B1A",
+
+                darkGroupTitleColor: "#64748B",
+
+                // important for submenu title visibility
+                itemColor: "#A8B3C7",
+                itemHoverColor: "#FFFFFF",
+                itemHoverBg: "#111C2E",
+                itemSelectedBg: "#22C7B8",
+                itemSelectedColor: "#031B1A",
+                subMenuItemBg: "#07111F",
+              }
+            : {
+                itemBg: "#FFFFFF",
+                subMenuItemBg: "#FFFFFF",
+
+                itemColor: "#334155",
+                itemHoverColor: "#0F766E",
+                itemHoverBg: "#F0FDFA",
+
+                itemSelectedBg: "#E6FFFB",
+                itemSelectedColor: "#0F766E",
+
+                groupTitleColor: "#94A3B8",
+              },
+
           Card: {
             colorBgContainer: isDarkMode ? "#111C2E" : "#FFFFFF",
           },
+
           Button: {
             primaryShadow: "none",
           },
+
           Table: {
             headerBg: isDarkMode ? "#1B2940" : "#F8FAFC",
             headerColor: isDarkMode ? "#EAF0F7" : "#111827",
@@ -96,10 +127,10 @@ function AppContent() {
             colorBgContainer: isDarkMode ? "#111C2E" : "#FFFFFF",
             colorText: isDarkMode ? "#EAF0F7" : "#111827",
             colorTextHeading: isDarkMode ? "#EAF0F7" : "#111827",
-            // expandedRowBg: isDarkMode ? "#0B1220" : "#F8FAFC"
           },
+
           Pagination: {
-            itemActiveBg: isDarkMode ? "#FFf" : "#109B9C",
+            itemActiveBg: isDarkMode ? "#111C2E" : "#E6FFFB",
             colorPrimary: isDarkMode ? "#22C7B8" : "#109B9C",
             colorPrimaryHover: isDarkMode ? "#35D6C8" : "#14B8A6",
             colorText: isDarkMode ? "#EAF0F7" : "#111827",
@@ -107,7 +138,42 @@ function AppContent() {
             colorBgContainer: isDarkMode ? "#111C2E" : "#FFFFFF",
             colorBorder: isDarkMode ? "#253249" : "#E2E8F0",
           },
-          
+
+          Form: {
+            labelColor: isDarkMode ? "#CBD5E1" : "#334155",
+          },
+
+          Modal: {
+            contentBg: isDarkMode ? "#111C2E" : "#FFFFFF",
+            headerBg: isDarkMode ? "#111C2E" : "#FFFFFF",
+            titleColor: isDarkMode ? "#EAF0F7" : "#111827",
+          },
+
+          Drawer: {
+            colorBgElevated: isDarkMode ? "#111C2E" : "#FFFFFF",
+            colorText: isDarkMode ? "#EAF0F7" : "#111827",
+          },
+
+          Input: {
+            colorBgContainer: isDarkMode ? "#0F172A" : "#FFFFFF",
+            colorBorder: isDarkMode ? "#253249" : "#E2E8F0",
+            colorText: isDarkMode ? "#EAF0F7" : "#111827",
+            colorTextPlaceholder: isDarkMode ? "#64748B" : "#94A3B8",
+          },
+
+          Select: {
+            colorBgContainer: isDarkMode ? "#0F172A" : "#FFFFFF",
+            colorBgElevated: isDarkMode ? "#111C2E" : "#FFFFFF",
+            colorBorder: isDarkMode ? "#253249" : "#E2E8F0",
+            colorText: isDarkMode ? "#EAF0F7" : "#111827",
+            colorTextPlaceholder: isDarkMode ? "#64748B" : "#94A3B8",
+            optionSelectedBg: isDarkMode ? "#1B2940" : "#E6FFFB",
+            optionActiveBg: isDarkMode ? "#162238" : "#F0FDFA",
+          },
+
+          Upload: {
+            colorText: isDarkMode ? "#EAF0F7" : "#111827",
+          },
         },
       }}
     >

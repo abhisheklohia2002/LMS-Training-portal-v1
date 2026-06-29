@@ -42,6 +42,8 @@ import {
 } from "../../hooks/useCertificationRules";
 
 import { useRoles } from "../../hooks/useRoles";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import Text from "antd/es/typography/Text";
 
 type RuleTab = "assignment" | "assessment" | "certification";
 
@@ -59,10 +61,17 @@ export function CourseRulesTab({ courseId }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<EditingState>(null);
   const [form] = Form.useForm();
+  const { isDarkMode } = useThemeMode();
 
+  const ui = {
+    text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+    actionButton: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+      : "",
+  };
   const { data: roles = [] } = useRoles();
 
-  const assignmentRulesQuery = useAssignmentRules();
+  // const assignmentRulesQuery = useAssignmentRules();
   const assessmentRulesQuery = useAssessmentRules(courseId);
   const courseAssessmentRules = assessmentRulesQuery.data ?? [];
 
@@ -164,68 +173,69 @@ export function CourseRulesTab({ courseId }: Props) {
 
       if (!editing) return;
 
+      if (editing.type === "assessment") {
+        const assessmentPayload = {
+          max_attempts: Number(values.max_attempts),
+          passing_score: Number(values.passing_score),
+          retake_allowed: Boolean(values.retake_allowed),
+          evaluation_method: values.evaluation_method,
+        };
 
-     if (editing.type === "assessment") {
-  const assessmentPayload = {
-    max_attempts: Number(values.max_attempts),
-    passing_score: Number(values.passing_score),
-    retake_allowed: Boolean(values.retake_allowed),
-    evaluation_method: values.evaluation_method,
-  };
+        if (editing.record) {
+          const assessmentRuleId =
+            editing.record.assessment_rule_id ??
+            editing.record.AssessmentRuleID ??
+            editing.record.id ??
+            editing.record.ID;
 
-  if (editing.record) {
-    const assessmentRuleId =
-      editing.record.assessment_rule_id ??
-      editing.record.AssessmentRuleID ??
-      editing.record.id ??
-      editing.record.ID;
+          await updateAssessmentRule.mutateAsync({
+            id: assessmentRuleId,
+            payload: assessmentPayload,
+          });
 
-    await updateAssessmentRule.mutateAsync({
-      id: assessmentRuleId,
-      payload: assessmentPayload,
-    });
+          message.success("Assessment rule updated");
+        } else {
+          await createAssessmentRule.mutateAsync({
+            courseId,
+            payload: assessmentPayload,
+          });
 
-    message.success("Assessment rule updated");
-  } else {
-    await createAssessmentRule.mutateAsync({
-      courseId,
-      payload: assessmentPayload,
-    });
+          message.success("Assessment rule created");
+        }
+      }
 
-    message.success("Assessment rule created");
-  }
-}
+      if (editing.type === "certification") {
+        const certificationPayload = {
+          issue_on_course_completion: Boolean(
+            values.issue_on_course_completion,
+          ),
+          minimum_score_required: Number(values.minimum_score_required),
+          validity_days: Number(values.validity_days),
+          renewal_required: Boolean(values.renewal_required),
+        };
 
-     if (editing.type === "certification") {
-  const certificationPayload = {
-    issue_on_course_completion: Boolean(values.issue_on_course_completion),
-    minimum_score_required: Number(values.minimum_score_required),
-    validity_days: Number(values.validity_days),
-    renewal_required: Boolean(values.renewal_required),
-  };
+        if (editing.record) {
+          const certificationRuleId =
+            editing.record.certification_rule_id ??
+            editing.record.CertificationRuleID ??
+            editing.record.id ??
+            editing.record.ID;
 
-  if (editing.record) {
-    const certificationRuleId =
-      editing.record.certification_rule_id ??
-      editing.record.CertificationRuleID ??
-      editing.record.id ??
-      editing.record.ID;
+          await updateCertificationRule.mutateAsync({
+            id: certificationRuleId,
+            payload: certificationPayload,
+          });
 
-    await updateCertificationRule.mutateAsync({
-      id: certificationRuleId,
-      payload: certificationPayload,
-    });
+          message.success("Certification rule updated");
+        } else {
+          await createCertificationRule.mutateAsync({
+            courseId,
+            payload: certificationPayload,
+          });
 
-    message.success("Certification rule updated");
-  } else {
-    await createCertificationRule.mutateAsync({
-      courseId,
-      payload: certificationPayload,
-    });
-
-    message.success("Certification rule created");
-  }
-}
+          message.success("Certification rule created");
+        }
+      }
 
       closeDrawer();
     } catch (error) {
@@ -236,13 +246,19 @@ export function CourseRulesTab({ courseId }: Props) {
   const assessmentColumns = [
     {
       title: "Max Attempts",
-      render: (_: any, record: any) =>
-        record.max_attempts ?? record.MaxAttempts ?? "-",
+      render: (_: any, record: any) => (
+        <Text className={ui.text}>
+          {record.max_attempts ?? record.MaxAttempts ?? "-"}
+        </Text>
+      ),
     },
     {
       title: "Passing Score",
-      render: (_: any, record: any) =>
-        record.passing_score ?? record.PassingScore ?? "-",
+      render: (_: any, record: any) => (
+        <Text className={ui.text}>
+          {record.passing_score ?? record.PassingScore ?? "-"}
+        </Text>
+      ),
     },
     {
       title: "Retake Allowed",
@@ -310,13 +326,19 @@ export function CourseRulesTab({ courseId }: Props) {
     },
     {
       title: "Minimum Score",
-      render: (_: any, record: any) =>
-        record.minimum_score_required ?? record.MinimumScoreRequired ?? "-",
+      render: (_: any, record: any) => (
+        <Text className={ui.text}>
+          {record.minimum_score_required ?? record.MinimumScoreRequired ?? "-"}
+        </Text>
+      ),
     },
     {
       title: "Validity Days",
-      render: (_: any, record: any) =>
-        record.validity_days ?? record.ValidityDays ?? "-",
+      render: (_: any, record: any) => (
+        <Text className={ui.text}>
+          {record.validity_days ?? record.ValidityDays ?? "-"}
+        </Text>
+      ),
     },
     {
       title: "Renewal",

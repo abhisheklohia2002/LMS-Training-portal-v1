@@ -22,6 +22,8 @@ import {
   useUpdateCertificationRule,
   useDeleteCertificationRule,
 } from "../../hooks/useCertificationRules";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import Text from "antd/es/typography/Text";
 
 type Props = {
   courseId: number;
@@ -31,7 +33,14 @@ export function CourseCertificationTab({ courseId }: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form] = Form.useForm();
-
+  const { isDarkMode } = useThemeMode();
+    
+      const ui = {
+        text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+        actionButton: isDarkMode
+          ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+          : "",
+      };
   const { data: rules = [] } = useCertificationRules();
   const { data: certifications = [], isLoading } = useCertifications();
 
@@ -112,11 +121,20 @@ export function CourseCertificationTab({ courseId }: Props) {
           {
             title: "Certification",
             dataIndex: "certification_name",
+             render:(text:string)=>(
+              <Text className={ui.text}>
+                {text}
+              </Text>
+             )
           },
           {
             title: "Validity",
             dataIndex: "validity_days",
-            render: (days) => `${days} days`,
+            render: (days) =>
+              <Text className={ui.text}>
+                {`${days} days`}
+              </Text>
+            
           },
           {
             title: "Status",

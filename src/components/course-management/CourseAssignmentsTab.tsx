@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, DatePicker, Drawer, Form, Select, Space, message } from "antd";
+import { Button, DatePicker, Drawer, Form, Select, Space, Table, message } from "antd";
 import dayjs from "dayjs";
 import { DataTable } from "../../components/common/DataTable";
 import { StatusTag } from "../../components/common/StatusTag";
@@ -9,12 +9,21 @@ import {
 } from "../../hooks/useTrainingAssignments";
 import { useUsers } from "../../hooks/useUsers";
 import { findUser } from "../../utils/lookup";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import Text from "antd/es/typography/Text";
 
 type Props = {
   courseId: number;
 };
 
 export function CourseAssignmentsTab({ courseId }: Props) {
+
+   const { isDarkMode } = useThemeMode();
+  
+    const ui = {
+      text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+    }
+
   const { data: assignments = [], isLoading } = useTrainingAssignments();
   const { data: users = [] } = useUsers();
   const createAssignment = useCreateTrainingAssignment();
@@ -30,6 +39,7 @@ export function CourseAssignmentsTab({ courseId }: Props) {
     value: user.user_id,
   }));
 
+
   return (
     <>
       <div className="mb-3 flex justify-end">
@@ -38,22 +48,34 @@ export function CourseAssignmentsTab({ courseId }: Props) {
         </Button>
       </div>
 
-      <DataTable
+      <Table
         loading={isLoading}
         dataSource={courseAssignments}
         columns={[
           {
             title: "Learner",
             render: (_, record: any) =>
-              findUser(users, record.user_id)?.full_name ?? record.user_id,
+              <Text className={ui.text}>
+               { findUser(users, record.user_id)?.full_name ?? record.user_id}
+              </Text>
           },
           {
             title: "Source",
             dataIndex: "assignment_source",
+              render: (text: string) =>(
+                <Text className={ui.text}>
+                  {text}
+                </Text> 
+              )
           },
           {
             title: "Due date",
             dataIndex: "due_date",
+            render: (text: string) =>(
+                <Text className={ui.text}>
+                  {text}
+                </Text> 
+              )
           },
           {
             title: "Status",

@@ -4,3 +4,106 @@
 body { margin: 0; background: #f5f7fb; }
 .ant-layout { min-height: 100vh; }
 .page-card { @apply rounded-2xl shadow-sm border border-slate-100; }
+
+
+/* Dark sidebar submenu title fix */
+.dark-sidebar-menu.ant-menu-dark .ant-menu-submenu-title {
+  color: #a8b3c7 !important;
+}
+
+.dark-sidebar-menu.ant-menu-dark .ant-menu-submenu-title:hover {
+  color: #ffffff !important;
+  background: #111c2e !important;
+}
+
+.dark-sidebar-menu.ant-menu-dark .ant-menu-submenu-open > .ant-menu-submenu-title {
+  color: #ffffff !important;
+  background: #111c2e !important;
+}
+
+.dark-sidebar-menu.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #ffffff !important;
+}
+
+/* Light sidebar submenu title fix */
+.light-sidebar-menu.ant-menu-light .ant-menu-submenu-title {
+  color: #334155 !important;
+}
+
+.light-sidebar-menu.ant-menu-light .ant-menu-submenu-title:hover {
+  color: #0f766e !important;
+  background: #f0fdfa !important;
+}
+
+.light-sidebar-menu.ant-menu-light .ant-menu-submenu-open > .ant-menu-submenu-title {
+  color: #0f766e !important;
+  background: #f0fdfa !important;
+}
+
+
+
+.course-tabs-dark .ant-tabs-tab {
+  color: #a8b3c7 !important;
+}
+
+.course-tabs-dark .ant-tabs-tab:hover {
+  color: #ffffff !important;
+}
+
+.course-tabs-dark .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #22c7b8 !important;
+}
+
+.course-tabs-dark .ant-tabs-ink-bar {
+  background: #22c7b8 !important;
+}
+
+.course-tabs-light .ant-tabs-tab {
+  color: #334155 !important;
+}
+
+.course-tabs-light .ant-tabs-tab:hover {
+  color: #0f766e !important;
+}
+
+.course-tabs-light .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #109b9c !important;
+}
+
+.course-tabs-light .ant-tabs-ink-bar {
+  background: #109b9c !important;
+}
+
+/* Course table expand icon - dark/light theme fix */
+.course-table-theme .ant-table-row-expand-icon {
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.course-table-theme .ant-table-row-expand-icon::before,
+.course-table-theme .ant-table-row-expand-icon::after {
+  background-color: #0f172a !important;
+}
+
+/* Dark mode */
+.course-table-theme-dark .ant-table-row-expand-icon {
+  border-color: #253249 !important;
+  background: #111c2e !important;
+  color: #eaf0f7 !important;
+}
+
+.course-table-theme-dark .ant-table-row-expand-icon::before,
+.course-table-theme-dark .ant-table-row-expand-icon::after {
+  background-color: #eaf0f7 !important;
+}
+
+.course-table-theme-dark .ant-table-row-expand-icon:hover {
+  border-color: #22c7b8 !important;
+  background: #162238 !important;
+}
+
+.course-table-theme-light .ant-table-row-expand-icon:hover {
+  border-color: #109b9c !important;
+  background: #f0fdfa !important;
+}

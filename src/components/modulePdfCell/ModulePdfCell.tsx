@@ -9,6 +9,7 @@ import {
 } from "../../hooks/useModuleDocuments";
 import { Progress } from "antd";
 import { useUploadManager } from "../../context/UploadProvider";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 type ModuleDocument = {
   document_id: number;
@@ -47,13 +48,18 @@ type Props = {
   courseId: number;
 };
 
-
-
-
 export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
   const { data } = useModuleDocuments(moduleId);
   const { data: videoData } = useModuleVideo(moduleId);
-  // const { startVideoUpload } = useUploadManager();
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    thumbBorder: isDarkMode ? "#253249" : "#e5e7eb",
+    thumbBg: isDarkMode ? "#162238" : "#f9fafb",
+    muted: isDarkMode ? "#94A3B8" : "#999",
+    modalText: isDarkMode ? "#EAF0F7" : "#111827",
+    previewBg: isDarkMode ? "#0B1220" : "#ffffff",
+  };
   const [videoProgress, setVideoProgress] = useState(0);
   const uploadModulePdf = useUploadModulePdf();
   const uploadModuleVideo = useUploadModuleVideo();
@@ -90,48 +96,47 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
     setVideoProgress(0);
   };
 
-  
   const handlePdfUpload = () => {
-  if (!pdfFile) {
-    message.error("Please select PDF file");
-    return;
-  }
+    if (!pdfFile) {
+      message.error("Please select PDF file");
+      return;
+    }
 
-  if (!thumbnailFile) {
-    message.error("Please select thumbnail image");
-    return;
-  }
+    if (!thumbnailFile) {
+      message.error("Please select thumbnail image");
+      return;
+    }
 
-  startPDFUpload({
-    courseId,
-    moduleId,
-    file: pdfFile,
-    thumbnail: thumbnailFile,
-    title: moduleTitle,
-    publicId: latestPdf?.public_id,
-    oldThumbnailPublicId: latestPdf?.thumbnail_public_id,
-  });
+    startPDFUpload({
+      courseId,
+      moduleId,
+      file: pdfFile,
+      thumbnail: thumbnailFile,
+      title: moduleTitle,
+      publicId: latestPdf?.public_id,
+      oldThumbnailPublicId: latestPdf?.thumbnail_public_id,
+    });
 
-  setUploadOpen(false);
-  resetPdfUploadState();
-};
+    setUploadOpen(false);
+    resetPdfUploadState();
+  };
 
   const handleVideoUpload = () => {
-  if (!videoFile) {
-    message.error("Please select video file");
-    return;
-  }
-  startVideoUpload({
-    courseId,
-    moduleId,
-    video: videoFile,
-    title: moduleTitle,
-    oldVideoPublicId: moduleVideo?.video_public_id,
-  });
+    if (!videoFile) {
+      message.error("Please select video file");
+      return;
+    }
+    startVideoUpload({
+      courseId,
+      moduleId,
+      video: videoFile,
+      title: moduleTitle,
+      oldVideoPublicId: moduleVideo?.video_public_id,
+    });
 
-  setVideoUploadOpen(false);
-  resetVideoUploadState();
-};
+    setVideoUploadOpen(false);
+    resetVideoUploadState();
+  };
 
   return (
     <>
@@ -148,9 +153,9 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
             width: 58,
             height: 58,
             borderRadius: 8,
-            border: "1px solid #e5e7eb",
+            border: `1px solid ${ui.thumbBorder}`,
             overflow: "hidden",
-            background: "#f9fafb",
+            background: ui.thumbBg,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -168,7 +173,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
               }}
             />
           ) : (
-            <span style={{ fontSize: 11, color: "#999" }}>No image</span>
+            <span style={{ fontSize: 11, color: ui.muted }}>No image</span>
           )}
         </div>
 
@@ -184,6 +189,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
                 backgroundColor: latestPdf?.file_url ? "green" : undefined,
                 color: latestPdf?.file_url ? "white" : undefined,
               }}
+              type={latestPdf?.file_url ? "primary" : "default"}
             >
               PDF
             </Button>
@@ -243,7 +249,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
       >
         <Space direction="vertical" style={{ width: "100%" }} size="middle">
           <div>
-            <p style={{ marginBottom: 8 }}>PDF file</p>
+            <p style={{ marginBottom: 8, color: ui.modalText }}>PDF file</p>
 
             <Upload
               accept="application/pdf"
@@ -266,7 +272,9 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
           </div>
 
           <div>
-            <p style={{ marginBottom: 8 }}>Thumbnail image</p>
+            <p style={{ marginBottom: 8, color: ui.modalText }}>
+              Thumbnail image
+            </p>
 
             <Upload
               accept="image/png,image/jpeg,image/jpg,image/webp"
@@ -360,7 +368,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
             }}
           />
         ) : (
-          <p>No PDF available</p>
+          <p style={{ color: ui.modalText }}>No PDF available</p>
         )}
       </Modal>
 
@@ -384,7 +392,7 @@ export function ModulePdfCell({ moduleId, moduleTitle, courseId }: Props) {
             }}
           />
         ) : (
-          <p>No video available</p>
+          <p style={{ color: ui.modalText }}>No video available</p>
         )}
       </Modal>
     </>

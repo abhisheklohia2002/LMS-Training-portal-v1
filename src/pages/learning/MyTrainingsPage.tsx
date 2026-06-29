@@ -63,6 +63,7 @@ import {
 } from "../../hooks/useModuleDocuments";
 import { useCreateTrainingSession } from "../../hooks/useTrainingSessionsByCourse";
 import { useQueryClient } from "@tanstack/react-query";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 function moduleStatus(progress?: ModuleProgress) {
   if (!progress) return "locked";
@@ -134,7 +135,19 @@ function QuizModal({
   const isSubmittingRef = useRef(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const hasAutoSubmittedRef = useRef(false);
+  const { isDarkMode } = useThemeMode();
 
+const quizTheme = {
+  page: isDarkMode ? "bg-[#0B1220] text-[#EAF0F7]" : "bg-white text-slate-900",
+  headerBorder: isDarkMode ? "border-[#253249]" : "border-slate-200",
+  footer: isDarkMode
+    ? "border-[#253249] bg-[#0F172A]"
+    : "border-slate-200 bg-white",
+  muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+  textarea: isDarkMode
+    ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7] placeholder:text-slate-500"
+    : "border-slate-200 bg-white text-slate-900",
+};
   const { data: questions = [], isLoading } = useLearnerAssessmentQuestions(
     assessment?.assessment_id,
   );
@@ -312,15 +325,17 @@ function QuizModal({
   return (
     <div
       ref={quizContainerRef}
-      className="fixed inset-0 z-[9999] flex flex-col bg-white"
+      className={`fixed inset-0 z-[9999] flex flex-col ${quizTheme.page}`}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+      <div 
+      className={`flex shrink-0 items-center justify-between border-b px-6 py-4 ${quizTheme.headerBorder}`}
+      >
         <div>
           <div className="text-xl font-semibold">
             {assessment?.assessment_title ?? "Assessment"}
           </div>
 
-          <div className="text-sm text-slate-500">
+          <div className={`text-sm ${quizTheme.muted}`}>
             Fullscreen test mode is active
           </div>
         </div>
@@ -381,7 +396,7 @@ function QuizModal({
                       />
                     ) : q.question_type === "text" ? (
                       <textarea
-                        className="w-full rounded-xl border border-slate-200 p-3"
+                        className={`w-full rounded-xl border p-3 outline-none ${quizTheme.textarea}`}
                         rows={4}
                         placeholder="Type your answer"
                       />
@@ -402,7 +417,9 @@ function QuizModal({
         )}
       </div>
 
-      <div className="flex shrink-0 justify-end border-t border-slate-200 bg-white px-6 py-4">
+      <div 
+      className={`flex shrink-0 justify-end border-t px-6 py-4 ${quizTheme.footer}`}
+      >
         <Button
           type="primary"
           size="large"
@@ -444,7 +461,26 @@ function ModuleLearningItem({
   assignmentId: number;
 }) {
   const queryClient = useQueryClient();
+const { isDarkMode } = useThemeMode();
 
+const ui = {
+  card: isDarkMode
+    ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+    : "border-slate-200 bg-white text-slate-900",
+
+  softCard: isDarkMode
+    ? "border-[#253249] bg-[#162238]"
+    : "border-slate-200 bg-slate-50",
+
+  title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+  text: isDarkMode ? "text-slate-300" : "text-slate-700",
+  muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+  weak: isDarkMode ? "text-slate-500" : "text-slate-400",
+
+  videoShell: isDarkMode
+    ? "border-[#253249] bg-[#0B1220]"
+    : "border-slate-200 bg-white",
+};
   const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
   const { data: videoData } = useModuleVideo(progress.module_id);
 
@@ -685,7 +721,9 @@ function ModuleLearningItem({
 
   return (
     <>
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div 
+      className={`rounded-2xl border p-4 shadow-sm ${ui.card}`}
+      >
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -726,17 +764,19 @@ function ModuleLearningItem({
               )}
             </div>
 
-            <div className="text-base font-semibold text-slate-900">
+            <div 
+            className={`text-base font-semibold ${ui.title}`}
+            >
               {moduleTitle}
             </div>
 
-            <div className="mt-1 text-sm text-slate-500">
+            <div className={`mt-1 text-sm ${ui.muted}`}>
               Complete the learning material before starting the assessment.
             </div>
 
             {hasVideo && (
               <Card
-                className="mt-4 overflow-hidden rounded-2xl border border-slate-200 shadow-sm"
+                className={`mt-4 overflow-hidden rounded-2xl border shadow-sm ${ui.videoShell}`}
                 bodyStyle={{ padding: 0 }}
               >
                 <div className="bg-slate-950">
@@ -787,7 +827,9 @@ function ModuleLearningItem({
             )}
 
             {!pdf?.thumbnail_url && hasVideo && (
-              <div className="mt-2 text-xs text-slate-400">
+              <div 
+              className={`mt-2 text-xs ${ui.weak}`}
+              >
                 No thumbnail uploaded for this module.
               </div>
             )}
@@ -868,7 +910,7 @@ function ModuleLearningItem({
               return (
                 <div
                   key={quiz.assessment_id}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                  className={`rounded-xl border p-3 ${ui.softCard}`}
                 >
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <Tag
@@ -956,7 +998,36 @@ function TrainingCard({
   userId: number;
 }) {
   const [activeQuiz, setActiveQuiz] = useState<Assessment | undefined>();
+  const { isDarkMode } = useThemeMode();
 
+const ui = {
+  card: isDarkMode
+    ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+    : "border-slate-200 bg-white text-slate-900",
+
+  thumbnailBox: isDarkMode ? "bg-[#162238]" : "bg-slate-100",
+
+  title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+  text: isDarkMode ? "text-slate-300" : "text-slate-700",
+  muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+  weak: isDarkMode ? "text-slate-500" : "text-slate-400",
+
+  timelineDone: isDarkMode
+    ? "border-green-500 bg-green-950/40 text-green-300"
+    : "border-green-500 bg-green-50 text-green-700",
+
+  timelineActive: isDarkMode
+    ? "border-blue-500 bg-blue-950/40 text-blue-300"
+    : "border-blue-500 bg-blue-50 text-blue-700",
+
+  timelineLocked: isDarkMode
+    ? "border-[#334155] bg-[#162238] text-slate-400"
+    : "border-slate-300 bg-slate-50 text-slate-500",
+
+  certificate: isDarkMode
+    ? "border-[#334155] bg-[#162238]"
+    : "border-slate-200 bg-slate-50",
+};
   const { data: courses } = useCourses();
   const { data: modules = [] } = useModules(assignment.course_id);
   const { data: progress = [] } = useModuleProgress(assignment.assignment_id);
@@ -1052,7 +1123,9 @@ function TrainingCard({
   };
 
   return (
-    <Card className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+    <Card 
+    className={`overflow-hidden rounded-2xl border shadow-sm ${ui.card}`}
+    >
       <QuizModal
         assessment={activeQuiz}
         userId={userId}
@@ -1063,7 +1136,10 @@ function TrainingCard({
 
       <div className="flex flex-col gap-6">
         <div className="grid gap-5 md:grid-cols-[240px_1fr]">
-          <div className="overflow-hidden rounded-2xl bg-slate-100">
+          <div
+           className={`overflow-hidden rounded-2xl ${ui.thumbnailBox}`}
+          
+          >
             {course?.thumbnail_url ? (
               <img
                 src={course.thumbnail_url}
@@ -1071,7 +1147,9 @@ function TrainingCard({
                 className="h-48 w-full object-cover md:h-full"
               />
             ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-slate-400 md:h-full">
+              <div 
+              className={`flex h-48 items-center justify-center text-sm md:h-full ${ui.weak}`}
+              >
                 No thumbnail
               </div>
             )}
@@ -1091,11 +1169,15 @@ function TrainingCard({
                 <Tag color="orange">Due: {formatDate(assignment.due_date)}</Tag>
               </div>
 
-              <h3 className="text-2xl font-semibold text-slate-900">
+              <h3 
+              className={`text-2xl font-semibold ${ui.title}`}
+              >
                 {course?.course_title ?? `Course ${assignment.course_id}`}
               </h3>
 
-              <p className="mt-2 text-sm text-slate-500">
+              <p 
+             className={`mt-2 text-sm ${ui.muted}`}
+              >
                 Continue your assigned learning path and complete modules,
                 quizzes, and certification.
               </p>
@@ -1107,7 +1189,9 @@ function TrainingCard({
                   Course progress
                 </span>
 
-                <span className="text-slate-500">
+                <span 
+                className={ui.muted}
+                >
                   {completed}/{total} modules completed
                 </span>
               </div>
@@ -1133,10 +1217,15 @@ function TrainingCard({
           <div>
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <div className="text-lg font-semibold text-slate-900">
+                <div 
+                
+                className={`text-lg font-semibold ${ui.title}`}
+                >
                   Learning path
                 </div>
-                <div className="text-sm text-slate-500">
+                <div 
+                className={`text-sm ${ui.muted}`}
+                >
                   Complete modules step by step.
                 </div>
               </div>
@@ -1156,13 +1245,13 @@ function TrainingCard({
                   dot: (
                     <div
                       className={[
-                        "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
-                        isCompleted
-                          ? "border-green-500 bg-green-50 text-green-700"
-                          : isInProgress
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-slate-300 bg-slate-50 text-slate-500",
-                      ].join(" ")}
+  "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
+  isCompleted
+    ? ui.timelineDone
+    : isInProgress
+      ? ui.timelineActive
+      : ui.timelineLocked,
+].join(" ")}
                     >
                       {index + 1}
                     </div>
@@ -1195,12 +1284,18 @@ function TrainingCard({
           </div>
         )}
 
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
+        <div 
+        className={`rounded-2xl border border-dashed p-4 ${ui.certificate}`}
+        >
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
             <div>
-              <div className="font-semibold text-slate-900">Certificate</div>
+              <div 
+              className={`font-semibold ${ui.title}`}
+              >Certificate</div>
 
-              <div className="text-sm text-slate-500">
+              <div
+              className={`text-sm ${ui.muted}`}
+              >
                 {issuedCert
                   ? `Issued: ${issuedCert.certificate_number}`
                   : !courseCert

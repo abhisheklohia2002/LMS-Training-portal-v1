@@ -30,21 +30,35 @@ import { useEffect, useMemo, useState } from "react";
 import { canManageLms } from "../utils/access";
 import { useLogout, useMe } from "../hooks/useAuth";
 import { useNotifications } from "../hooks/useNotifications";
+
 const { Header, Sider, Content } = Layout;
 
 export function MainLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const { isDarkMode, toggleTheme } = useThemeMode();
+
   const [openKeys, setOpenKeys] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate();
+
   const logout = useLogout();
   const { data: me } = useMe();
   const { data: notes } = useNotifications();
+
   const unread = notes?.filter((n) => !n.read_status).length ?? 0;
+
   const selectedKey = location.pathname;
-  const role = me?.role.role_name || localStorage.getItem("lms_role");
+
+  const role = me?.role?.role_name || localStorage.getItem("lms_role") || "";
   const isManagerOrAdmin = canManageLms(role);
+
+  const sidebarBg = isDarkMode ? "#07111F" : "#FFFFFF";
+  const sidebarHeaderBg = isDarkMode ? "#0F172A" : "#F8FAFC";
+  const sidebarBorder = isDarkMode ? "rgba(255,255,255,0.1)" : "#E2E8F0";
+  const logoBoxBg = isDarkMode ? "#FFFFFF" : "#F1F5F9";
+  const portalText = isDarkMode ? "#CBD5E1" : "#64748B";
+
   const items = useMemo(() => {
     const base = [
       {
@@ -64,6 +78,7 @@ export function MainLayout() {
         ],
       },
     ];
+
     if (!isManagerOrAdmin) {
       return [
         ...base,
@@ -80,6 +95,7 @@ export function MainLayout() {
         },
       ];
     }
+
     return [
       ...base,
       {
@@ -91,22 +107,15 @@ export function MainLayout() {
             icon: <BuildOutlined />,
             label: <Link to="/entity">Entity</Link>,
           },
-
           {
             key: "/departments",
             icon: <BuildOutlined />,
             label: "Departments",
             children: [
               {
-                key: "/departments",
+                key: "/departments/list",
                 label: <Link to="/departments">Department List</Link>,
               },
-              // {
-              //   key: "/departments/mappings",
-              //   label: (
-              //     <Link to="/departments/mappings">Department Mappings</Link>
-              //   ),
-              // },
               {
                 key: "/departments/assignments",
                 label: (
@@ -115,14 +124,6 @@ export function MainLayout() {
                   </Link>
                 ),
               },
-              // {
-              //   key: "/departments/training-mappings",
-              //   label: (
-              //     <Link to="/departments/training-mappings">
-              //       Training Mappings
-              //     </Link>
-              //   ),
-              // },
             ],
           },
           {
@@ -130,19 +131,16 @@ export function MainLayout() {
             icon: <TeamOutlined />,
             label: <Link to="/users">Users</Link>,
           },
-
           {
             key: "/courses",
             icon: <BookOutlined />,
             label: <Link to="/courses">Courses</Link>,
           },
-
           {
             key: "/roles",
             icon: <UserOutlined />,
             label: <Link to="/roles">Roles</Link>,
           },
-
           {
             key: "/notifications",
             icon: <BellOutlined />,
@@ -162,12 +160,24 @@ export function MainLayout() {
       },
     ];
   }, [isManagerOrAdmin]);
-  const getRole = (roleName: string | undefined) => {
-    return roleName;
-  };
+
+  const normalizedSelectedKey = useMemo(() => {
+    if (location.pathname === "/departments") {
+      return "/departments/list";
+    }
+
+    if (location.pathname.startsWith("/departments/assignments")) {
+      return "/departments/assignments";
+    }
+
+    return location.pathname;
+  }, [location.pathname]);
+
   useEffect(() => {
     if (location.pathname.startsWith("/departments")) {
-      setOpenKeys(["/departments-group"]);
+      setOpenKeys(["/departments"]);
+    } else {
+      setOpenKeys([]);
     }
   }, [location.pathname]);
 
@@ -180,10 +190,23 @@ export function MainLayout() {
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
         trigger={null}
-        className="!bg-slate-950 h-screen overflow-y-auto"
+        style={{
+          background: sidebarBg,
+          borderRight: `1px solid ${sidebarBorder}`,
+        }}
+        className="h-screen overflow-y-auto"
       >
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10 bg-slate-900">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-md">
+        <div
+          className="flex items-center gap-3 px-5 py-4"
+          style={{
+            background: sidebarHeaderBg,
+            borderBottom: `1px solid ${sidebarBorder}`,
+          }}
+        >
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-xl shadow-md"
+            style={{ background: logoBoxBg }}
+          >
             <img
               src="/images/idea.png"
               alt="TripXL"
@@ -193,47 +216,72 @@ export function MainLayout() {
 
           <div className="flex flex-col leading-tight">
             <span className="text-xl font-extrabold tracking-wide">
-              <span className="text-teal-400">Trip</span>
+              <span className="text-teal-500">Trip</span>
               <span className="text-orange-400">XL</span>
             </span>
-            <span className="text-xs font-medium uppercase tracking-[0.22em] text-slate-300">
+            <span
+              className="text-xs font-medium uppercase tracking-[0.22em]"
+              style={{ color: portalText }}
+            >
               LMS Portal
             </span>
           </div>
         </div>
 
         <Menu
-          theme="dark"
+          theme={isDarkMode ? "dark" : "light"}
           mode="inline"
-          selectedKeys={[selectedKey]}
+          selectedKeys={[normalizedSelectedKey]}
+          openKeys={openKeys}
+          onOpenChange={(keys) => setOpenKeys(keys)}
           items={items}
-          className="!bg-slate-950"
+          className={isDarkMode ? "dark-sidebar-menu" : "light-sidebar-menu"}
+          style={{
+            background: sidebarBg,
+            borderInlineEnd: "none",
+            paddingTop: 12,
+          }}
         />
       </Sider>
 
-      <Layout className="h-screen overflow-hidden ">
-        <Header className="flex h-16 items-center justify-between border-b border-slate-200 !bg-white px-5 dark:border-[#253249] dark:!bg-[#0F172A]">
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            className="mr-3"
-          />
-          <Input.Search
-            placeholder="Search courses, users, certificates"
-            className="max-w-md"
-          />
+      <Layout className="h-screen overflow-hidden">
+        <Header
+          className="grid h-16 grid-cols-[auto_1fr_auto] items-center border-b px-5"
+          style={{
+            background: isDarkMode ? "#0F172A" : "#FFFFFF",
+            borderColor: isDarkMode ? "#253249" : "#E2E8F0",
+          }}
+        >
+          {/* Left */}
+          <div className="flex items-center">
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+            />
+          </div>
 
-          <div className="flex items-center gap-5">
-            <Switch 
+          {/* Center */}
+          <div className="flex justify-center">
+            <Input.Search
+              placeholder="Search courses, users, certificates"
+              className="w-full max-w-xl"
+              allowClear
+            />
+          </div>
+
+          {/* Right */}
+          <div className="flex items-center justify-end gap-5">
+            <Switch
               checked={isDarkMode}
               onChange={toggleTheme}
               checkedChildren={<MoonOutlined />}
               unCheckedChildren={<SunOutlined />}
             />
+
             <Badge count={unread}>
               <BellOutlined
-                className="text-xl"
+                className="cursor-pointer text-xl"
                 onClick={() => navigate("/notifications")}
               />
             </Badge>
@@ -241,12 +289,17 @@ export function MainLayout() {
             <Dropdown
               menu={{
                 items: [
-                  { key: "profile", label: me?.user.full_name },
+                  {
+                    key: "profile",
+                    label: me?.user?.full_name || "User",
+                  },
                   {
                     key: "role",
-                    label: `Role: ${getRole(me?.role.role_name)}`,
+                    label: `Role: ${role || "N/A"}`,
                   },
-                  { type: "divider" },
+                  {
+                    type: "divider",
+                  },
                   {
                     key: "logout",
                     label: "Logout",
@@ -259,7 +312,7 @@ export function MainLayout() {
               }}
             >
               <Avatar className="cursor-pointer bg-blue-600">
-                {me?.user.full_name?.[0] ?? "U"}
+                {me?.user?.full_name?.[0] ?? "U"}
               </Avatar>
             </Dropdown>
           </div>

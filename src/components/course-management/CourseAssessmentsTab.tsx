@@ -8,11 +8,12 @@ import {
   InputNumber,
   Select,
   Space,
+  Table,
   Tabs,
   Tag,
   message,
 } from "antd";
-import { EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { EditOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import { DataTable } from "../../components/common/DataTable";
 import { StatusTag } from "../../components/common/StatusTag";
 import {
@@ -26,14 +27,40 @@ import { useAssessmentAttempts } from "../../hooks/useAssessmentAttempts";
 import { useUsers } from "../../hooks/useUsers";
 import { findUser } from "../../utils/lookup";
 import { QuestionsTab } from "../assessments/QuestionsTab";
-
-
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import Text from "antd/es/typography/Text";
 
 type Props = {
   courseId: number;
 };
 
 export function CourseAssessmentsTab({ courseId }: Props) {
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+
+    topBar: isDarkMode
+      ? "mb-3 flex justify-end rounded-xl border border-[#253249] bg-[#111C2E] p-3"
+      : "mb-3 flex justify-end rounded-xl border border-slate-200 bg-white p-3",
+
+    expandedRow: isDarkMode
+      ? "rounded-xl border border-[#253249] bg-[#0F172A] p-4"
+      : "rounded-xl border border-slate-200 bg-slate-50 p-4",
+
+    card: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+      : "border-slate-200 bg-white text-slate-900",
+
+    actionButton: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7] hover:!border-[#22C7B8] hover:!text-[#22C7B8]"
+      : "border-slate-300 bg-white text-slate-700 hover:!border-[#109B9C] hover:!text-[#109B9C]",
+
+    expandButton: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7] hover:!border-[#22C7B8] hover:!text-[#22C7B8]"
+      : "border-slate-300 bg-white text-slate-700 hover:!border-[#109B9C] hover:!text-[#109B9C]",
+  };
+
   const { data: assessments = [], isLoading } = useAssessments();
   const { data: modules = [] } = useModules(courseId);
   const { data: attempts = [] } = useAssessmentAttempts();
@@ -50,7 +77,7 @@ export function CourseAssessmentsTab({ courseId }: Props) {
   const [form] = Form.useForm();
 
   const courseAssessments = assessments.filter(
-    (assessment: any) => assessment.course_id === courseId,
+    (assessment: any) => Number(assessment.course_id) === Number(courseId),
   );
 
   const openCreate = () => {
@@ -122,55 +149,90 @@ export function CourseAssessmentsTab({ courseId }: Props) {
 
   return (
     <>
-      <div className="mb-3 flex justify-end">
+      <div className={ui.topBar}>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Create assessment
         </Button>
       </div>
 
-      <DataTable
+      <Table
         loading={isLoading}
         dataSource={courseAssessments}
+        rowKey="assessment_id"
         expandable={{
           expandedRowRender: (assessment: any) => (
-            <Tabs
-              items={[
-                {
-                  key: "questions",
-                  label: "Questions",
-                  children: <QuestionsTab assessment={assessment} />,
-                },
-                {
-                  key: "attempts",
-                  label: "Attempts",
-                  children: (
-                    <Card title="Attempts">
-                      <DataTable
-                        dataSource={attempts.filter(
-                          (attempt: any) =>
-                            attempt.assessment_id === assessment.assessment_id,
-                        )}
-                        columns={[
-                          {
-                            title: "User",
-                            render: (_, attempt: any) =>
-                              findUser(users, attempt.user_id)?.full_name ??
-                              attempt.user_id,
-                          },
-                          { title: "Attempt", dataIndex: "attempt_no" },
-                          { title: "Score", dataIndex: "score_obtained" },
-                          {
-                            title: "Result",
-                            render: (_, attempt: any) => (
-                              <StatusTag value={attempt.result_status} />
-                            ),
-                          },
-                        ]}
-                      />
-                    </Card>
-                  ),
-                },
-              ]}
+            <div className={ui.expandedRow}>
+              <Tabs
+                className={
+                  isDarkMode ? "course-tabs-dark" : "course-tabs-light"
+                }
+                items={[
+                  {
+                    key: "questions",
+                    label: "Questions",
+                    children: <QuestionsTab assessment={assessment} />,
+                  },
+                  {
+                    key: "attempts",
+                    label: "Attempts",
+                    children: (
+                      <Card title="Attempts" className={ui.card}>
+                        <Table
+                          rowKey={(attempt: any) =>
+                            `${attempt.assessment_id}-${attempt.user_id}-${attempt.attempt_no}`
+                          }
+                          dataSource={attempts.filter(
+                            (attempt: any) =>
+                              attempt.assessment_id ===
+                              assessment.assessment_id,
+                          )}
+                          columns={[
+                            {
+                              title: "User",
+                              render: (_: unknown, attempt: any) => (
+                                <Text className={ui.text}>
+                                  {findUser(users, attempt.user_id)
+                                    ?.full_name ?? attempt.user_id}
+                                </Text>
+                              ),
+                            },
+                            {
+                              title: "Attempt",
+                              dataIndex: "attempt_no",
+                              render: (value: string) => (
+                                <Text className={ui.text}>{value}</Text>
+                              ),
+                            },
+                            {
+                              title: "Score",
+                              dataIndex: "score_obtained",
+                              render: (value: string) => (
+                                <Text className={ui.text}>{value}</Text>
+                              ),
+                            },
+                            {
+                              title: "Result",
+                              render: (_: unknown, attempt: any) => (
+                                <StatusTag value={attempt.result_status} />
+                              ),
+                            },
+                          ]}
+                        />
+                      </Card>
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          ),
+
+          expandIcon: ({ expanded, onExpand, record }) => (
+            <Button
+              size="small"
+              // type={expanded ? "primary" : "default"}
+              icon={expanded ? <MinusOutlined /> : <PlusOutlined />}
+              onClick={(event) => onExpand(record, event)}
+              className={ui.expandButton}
             />
           ),
         }}
@@ -178,25 +240,36 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           {
             title: "Assessment",
             dataIndex: "assessment_title",
+            render: (text: string) => <Text className={ui.text}>{text}</Text>,
           },
           {
             title: "Module",
-            render: (_, record: any) =>
-              modules.find((module: any) => module.module_id === record.module_id)
-                ?.module_title ?? "-",
+            render: (_: unknown, record: any) => (
+              <Text className={ui.text}>
+                {modules.find(
+                  (module: any) =>
+                    Number(module.module_id) === Number(record.module_id),
+                )?.module_title ?? "-"}
+              </Text>
+            ),
           },
           {
             title: "Passing",
-            render: (_, record: any) =>
-              record.rule?.passing_score ?? record.passing_score,
+            render: (_: unknown, record: any) => (
+              <Text className={ui.text}>
+                {record.rule?.passing_score ?? record.passing_score}
+              </Text>
+            ),
           },
           {
             title: "Attempts",
-            render: (_, record: any) => record.rule?.max_attempts ?? 1,
+            render: (_: unknown, record: any) => (
+              <Text className={ui.text}>{record.rule?.max_attempts ?? 1}</Text>
+            ),
           },
           {
             title: "Retake",
-            render: (_, record: any) =>
+            render: (_: unknown, record: any) =>
               record.rule?.retake_allowed ? (
                 <Tag color="green">Allowed</Tag>
               ) : (
@@ -205,16 +278,19 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           },
           {
             title: "Active",
-            render: (_, record: any) => <StatusTag value={record.is_active} />,
+            render: (_: unknown, record: any) => (
+              <StatusTag value={record.is_active} />
+            ),
           },
           {
             title: "Action",
             width: 120,
-            render: (_, record: any) => (
+            render: (_: unknown, record: any) => (
               <Button
                 size="small"
                 icon={<EditOutlined />}
                 onClick={() => openEdit(record)}
+                className={ui.actionButton}
               >
                 Edit
               </Button>
@@ -228,6 +304,7 @@ export function CourseAssessmentsTab({ courseId }: Props) {
         onClose={closeDrawer}
         title={editingAssessment ? "Edit assessment" : "Create assessment"}
         width={520}
+        destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
@@ -247,7 +324,12 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           <Form.Item
             name="assessment_title"
             label="Assessment title"
-            rules={[{ required: true, message: "Assessment title is required" }]}
+            rules={[
+              {
+                required: true,
+                message: "Assessment title is required",
+              },
+            ]}
           >
             <Input placeholder="Example: Safety Quiz" />
           </Form.Item>
@@ -255,7 +337,12 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           <Form.Item
             name="assessment_type"
             label="Type"
-            rules={[{ required: true, message: "Assessment type is required" }]}
+            rules={[
+              {
+                required: true,
+                message: "Assessment type is required",
+              },
+            ]}
           >
             <Select
               options={[
@@ -269,7 +356,12 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           <Form.Item
             name="max_score"
             label="Max score"
-            rules={[{ required: true, message: "Max score is required" }]}
+            rules={[
+              {
+                required: true,
+                message: "Max score is required",
+              },
+            ]}
           >
             <InputNumber min={1} className="w-full" />
           </Form.Item>
@@ -277,7 +369,12 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           <Form.Item
             name="passing_score"
             label="Fallback passing score"
-            rules={[{ required: true, message: "Passing score is required" }]}
+            rules={[
+              {
+                required: true,
+                message: "Passing score is required",
+              },
+            ]}
           >
             <InputNumber min={0} className="w-full" />
           </Form.Item>
@@ -285,7 +382,12 @@ export function CourseAssessmentsTab({ courseId }: Props) {
           <Form.Item
             name="rule_id"
             label="Assessment rule"
-            rules={[{ required: true, message: "Please select assessment rule" }]}
+            rules={[
+              {
+                required: true,
+                message: "Please select assessment rule",
+              },
+            ]}
           >
             <Select
               loading={rulesLoading}
@@ -309,6 +411,7 @@ export function CourseAssessmentsTab({ courseId }: Props) {
             >
               Save
             </Button>
+
             <Button onClick={closeDrawer}>Cancel</Button>
           </Space>
         </Form>

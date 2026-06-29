@@ -20,9 +20,19 @@ import {
   useCertifications,
   useCreateCertification,
 } from "../../hooks/useCertifications";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import Text from "antd/es/typography/Text";
 
 
 export function CertificationsPage() {
+  const { isDarkMode } = useThemeMode();
+  
+    const ui = {
+      text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+      actionButton: isDarkMode
+        ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+        : "",
+    };
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form] = Form.useForm();
@@ -113,20 +123,28 @@ export function CertificationsPage() {
           {
             title: "Certification",
             dataIndex: "certification_name",
+            render:(text:string)=>(
+              <Text className={ui.text}>
+                {text}
+              </Text>
+            )
           },
           {
             title: "Course",
-            render: (_, record) => {
+            render: (_, record) =>   
+              {
               const course = courses.find(
                 (c: any) => c.course_id === record.course_id,
               );
-              return course?.course_title ?? record.course_id;
+              return <Text className={ui.text}>
+                {course?.course_title ?? record.course_id}
+              </Text> 
             },
           },
           {
             title: "Validity",
             dataIndex: "validity_days",
-            render: (days) => `${days} days`,
+            render: (days) => <Text className={ui.text}>{`${days} days`}</Text> ,
           },
           {
             title: "Status",

@@ -8,6 +8,7 @@ import {
   Modal,
   Select,
   Space,
+  Table,
   Tag,
   Tooltip,
   Upload,
@@ -33,6 +34,7 @@ import {
 import { CourseDetail } from "../../components/course-management/CourseDetail";
 import { iconClass, primaryIconClass } from "../../common";
 import Text from "antd/es/typography/Text";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 function formatDuration(minutes?: number) {
   if (!minutes) return "0 min";
@@ -88,6 +90,26 @@ export function CoursesPage() {
   const { data, isLoading } = useCourses();
   const create = useCreateCourse();
   const update = useUpdateCourse();
+
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    expandedRow: isDarkMode
+      ? "rounded-xl border border-[#253249] bg-[#0F172A] p-4"
+      : "rounded-xl border border-slate-200 bg-slate-50 p-4",
+
+    thumbnailBox: isDarkMode
+      ? "relative inline-block h-[50px] w-[80px] overflow-hidden rounded-lg bg-[#162238]"
+      : "relative inline-block h-[50px] w-[80px] overflow-hidden rounded-lg bg-slate-100",
+
+    previewBg: isDarkMode ? "#0B1220" : "#f5f5f5",
+
+    text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+
+    editButton: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+      : "",
+  };
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -167,12 +189,16 @@ export function CoursesPage() {
         }
       />
 
-      <DataTable
+      <Table
+        className={[
+          "course-table-theme",
+          isDarkMode ? "course-table-theme-dark" : "course-table-theme-light",
+        ].join(" ")}
         loading={isLoading}
         dataSource={data}
         expandable={{
           expandedRowRender: (r: any) => (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-[#253249] dark:bg-[#0F172A]">
+            <div className={ui.expandedRow}>
               <CourseDetail courseId={r.course_id} />
             </div>
           ),
@@ -188,7 +214,7 @@ export function CoursesPage() {
               }
 
               return (
-                <div className="relative inline-block h-[50px] w-[80px] overflow-hidden rounded-lg bg-slate-100 dark:bg-[#162238]">
+                <div className={ui.thumbnailBox}>
                   <Image
                     src={thumbnailUrl}
                     alt="Course thumbnail"
@@ -215,7 +241,9 @@ export function CoursesPage() {
           {
             title: "Course",
             dataIndex: "course_title",
-            render: (value: string) => <Text>{value || "-"}</Text>,
+            render: (value: string) => (
+              <Text className={ui.text}>{value || "-"}</Text>
+            ),
           },
           {
             title: "Type",
@@ -247,7 +275,7 @@ export function CoursesPage() {
                 icon={<EditOutlined className={iconClass} />}
                 size="small"
                 onClick={() => handleEdit(record)}
-                className="dark:border-[#253249] dark:bg-[#111C2E] dark:text-[#EAF0F7]"
+                className={ui.editButton}
               >
                 Edit
               </Button>
@@ -273,7 +301,7 @@ export function CoursesPage() {
             aspectRatio: "1 / 1",
             overflow: "hidden",
             borderRadius: 12,
-            background: "#f5f5f5",
+            background: ui.previewBg,
           }}
         >
           <Image

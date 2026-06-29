@@ -8,12 +8,33 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "../../hooks/useNotifications";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 const { Text } = Typography;
 
 type NotificationFilter = "all" | "unread" | "read";
 
 export function NotificationsPage() {
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    list: isDarkMode
+      ? "rounded-2xl border border-[#253249] bg-[#111C2E] p-3"
+      : "rounded-2xl border border-slate-200 bg-white p-3",
+
+    item: isDarkMode
+      ? "border-[#253249]"
+      : "border-slate-200",
+
+    title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+
+    muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+
+    actionButton: isDarkMode
+      ? "border-[#253249] bg-[#0F172A] text-[#EAF0F7] hover:!border-[#22C7B8] hover:!text-[#22C7B8]"
+      : "border-slate-300 bg-white text-slate-700 hover:!border-[#109B9C] hover:!text-[#109B9C]",
+  };
+
   const { data = [], isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
 
@@ -51,9 +72,15 @@ export function NotificationsPage() {
         loading={isLoading}
         dataSource={filteredNotifications}
         locale={{
-          emptyText: <Empty description="No notifications found" />,
+          emptyText: (
+            <Empty
+              description={
+                <span className={ui.muted}>No notifications found</span>
+              }
+            />
+          ),
         }}
-        className="rounded-2xl bg-white p-3"
+        className={ui.list}
         renderItem={(notification) => {
           const date =
             notification.sent_at ||
@@ -62,6 +89,7 @@ export function NotificationsPage() {
 
           return (
             <List.Item
+              className={ui.item}
               actions={[
                 !notification.read_status ? (
                   <Button
@@ -72,6 +100,7 @@ export function NotificationsPage() {
                     onClick={() =>
                       handleMarkRead(notification.notification_id)
                     }
+                    className={ui.actionButton}
                   >
                     Mark read
                   </Button>
@@ -80,8 +109,10 @@ export function NotificationsPage() {
             >
               <List.Item.Meta
                 title={
-                  <div className="flex items-center gap-2">
-                    <span>{notification.title || notification.message}</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`font-medium ${ui.title}`}>
+                      {notification.title || notification.message}
+                    </span>
 
                     <StatusTag
                       value={notification.read_status ? "read" : "unread"}
@@ -92,12 +123,14 @@ export function NotificationsPage() {
                   <div className="space-y-1">
                     {notification.title && (
                       <div>
-                        <Text type="secondary">{notification.message}</Text>
+                        <Text className={ui.muted}>
+                          {notification.message}
+                        </Text>
                       </div>
                     )}
 
                     <div>
-                      <Text type="secondary">
+                      <Text className={ui.muted}>
                         {notification.notification_type} •{" "}
                         {dayjs(date).format("DD MMM YYYY HH:mm")}
                       </Text>
