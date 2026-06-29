@@ -37,27 +37,68 @@ export type MarkAttendancePayload = {
   attendance_source?: "manual" | "qr" | "geo" | "auto";
   remarks?: string;
 };
+
+type AttendanceByUserResponse =
+  | Attendance[]
+  | {
+      data?: Attendance[];
+      attendances?: Attendance[];
+    };
+
 export function useAttendanceByUser(userId?: number) {
-  return useQuery({
+  return useQuery<Attendance[]>({
     queryKey: ["attendance", "user", userId],
     enabled: Boolean(userId),
     queryFn: async () => {
-      return api.attendance.byUser(userId!);
+      const response = (await api.attendance.byUser(
+        userId!,
+      )) as AttendanceByUserResponse;
+
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      return response.data ?? response.attendances ?? [];
     },
   });
 }
 
+
+
+type AttendanceSummaryResponse =
+  | AttendanceSummary
+  | {
+      data?: AttendanceSummary;
+      summary?: AttendanceSummary;
+    };
+
 export function useAttendanceSummary(userId?: number, courseId?: number) {
-  return useQuery({
+  return useQuery<AttendanceSummary>({
     queryKey: ["attendance-summary", userId, courseId],
     enabled: Boolean(userId && courseId),
     queryFn: async () => {
-      return api.attendance.summaryByCourse(userId!, courseId!);
+      const response = (await api.attendance.summaryByCourse(
+        userId!,
+        courseId!,
+      )) as AttendanceSummaryResponse;
+
+      if ("course_id" in response) {
+        return response;
+      }
+
+      return response.data ?? response.summary ?? {
+        course_id: courseId!,
+        total_sessions: 0,
+        present: 0,
+        absent: 0,
+        late: 0,
+        excused: 0,
+        attendance_percentage: 0,
+        sessions: [],
+      };
     },
   });
 }
-
-
 
 export function useMark() {
   const queryClient = useQueryClient();
@@ -68,12 +109,12 @@ export function useMark() {
       payload,
     }: {
       sessionId: number;
-      payload: any;
+      payload: MarkAttendancePayload;
     }) => api.attendance.mark(sessionId, payload),
 
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["attendance-by-user", variables.payload.user_id],
+        queryKey: ["attendance", "user", variables.payload.user_id],
       });
 
       queryClient.invalidateQueries({
@@ -86,3 +127,5 @@ export function useMark() {
     },
   });
 }
+
+

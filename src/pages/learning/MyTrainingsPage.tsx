@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Collapse,
   Empty,
   Form,
   Modal,
@@ -67,8 +68,8 @@ import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 function moduleStatus(progress?: ModuleProgress) {
   if (!progress) return "locked";
-  if (progress.status === "completed") return "done";
-  if (progress.status === "in_progress") return "in progress";
+  if (progress.status === "completed") return "Done";
+  if (progress.status === "in_progress") return "In progress";
   return "pending";
 }
 function formatDate(value?: any) {
@@ -137,17 +138,19 @@ function QuizModal({
   const hasAutoSubmittedRef = useRef(false);
   const { isDarkMode } = useThemeMode();
 
-const quizTheme = {
-  page: isDarkMode ? "bg-[#0B1220] text-[#EAF0F7]" : "bg-white text-slate-900",
-  headerBorder: isDarkMode ? "border-[#253249]" : "border-slate-200",
-  footer: isDarkMode
-    ? "border-[#253249] bg-[#0F172A]"
-    : "border-slate-200 bg-white",
-  muted: isDarkMode ? "text-slate-400" : "text-slate-500",
-  textarea: isDarkMode
-    ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7] placeholder:text-slate-500"
-    : "border-slate-200 bg-white text-slate-900",
-};
+  const quizTheme = {
+    page: isDarkMode
+      ? "bg-[#0B1220] text-[#EAF0F7]"
+      : "bg-white text-slate-900",
+    headerBorder: isDarkMode ? "border-[#253249]" : "border-slate-200",
+    footer: isDarkMode
+      ? "border-[#253249] bg-[#0F172A]"
+      : "border-slate-200 bg-white",
+    muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+    textarea: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7] placeholder:text-slate-500"
+      : "border-slate-200 bg-white text-slate-900",
+  };
   const { data: questions = [], isLoading } = useLearnerAssessmentQuestions(
     assessment?.assessment_id,
   );
@@ -327,8 +330,8 @@ const quizTheme = {
       ref={quizContainerRef}
       className={`fixed inset-0 z-[9999] flex flex-col ${quizTheme.page}`}
     >
-      <div 
-      className={`flex shrink-0 items-center justify-between border-b px-6 py-4 ${quizTheme.headerBorder}`}
+      <div
+        className={`flex shrink-0 items-center justify-between border-b px-6 py-4 ${quizTheme.headerBorder}`}
       >
         <div>
           <div className="text-xl font-semibold">
@@ -417,8 +420,8 @@ const quizTheme = {
         )}
       </div>
 
-      <div 
-      className={`flex shrink-0 justify-end border-t px-6 py-4 ${quizTheme.footer}`}
+      <div
+        className={`flex shrink-0 justify-end border-t px-6 py-4 ${quizTheme.footer}`}
       >
         <Button
           type="primary"
@@ -461,26 +464,26 @@ function ModuleLearningItem({
   assignmentId: number;
 }) {
   const queryClient = useQueryClient();
-const { isDarkMode } = useThemeMode();
+  const { isDarkMode } = useThemeMode();
 
-const ui = {
-  card: isDarkMode
-    ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
-    : "border-slate-200 bg-white text-slate-900",
+  const ui = {
+    card: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+      : "border-slate-200 bg-white text-slate-900",
 
-  softCard: isDarkMode
-    ? "border-[#253249] bg-[#162238]"
-    : "border-slate-200 bg-slate-50",
+    softCard: isDarkMode
+      ? "border-[#253249] bg-[#162238]"
+      : "border-slate-200 bg-slate-50",
 
-  title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
-  text: isDarkMode ? "text-slate-300" : "text-slate-700",
-  muted: isDarkMode ? "text-slate-400" : "text-slate-500",
-  weak: isDarkMode ? "text-slate-500" : "text-slate-400",
+    title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+    text: isDarkMode ? "text-slate-300" : "text-slate-700",
+    muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+    weak: isDarkMode ? "text-slate-500" : "text-slate-400",
 
-  videoShell: isDarkMode
-    ? "border-[#253249] bg-[#0B1220]"
-    : "border-slate-200 bg-white",
-};
+    videoShell: isDarkMode
+      ? "border-[#253249] bg-[#0B1220]"
+      : "border-slate-200 bg-white",
+  };
   const { data: docsRaw = [] } = useModuleDocuments(progress.module_id);
   const { data: videoData } = useModuleVideo(progress.module_id);
 
@@ -608,9 +611,9 @@ const ui = {
     }
 
     const shouldSync =
-  force ||
-  safePercent >= lastSyncedPercentRef.current + 10 ||
-  (safePercent >= 70 && lastSyncedPercentRef.current < 70);
+      force ||
+      safePercent >= lastSyncedPercentRef.current + 10 ||
+      (safePercent >= 70 && lastSyncedPercentRef.current < 70);
 
     if (!shouldSync || updateVideoProgress.isPending) {
       return;
@@ -721,9 +724,7 @@ const ui = {
 
   return (
     <>
-      <div 
-      className={`rounded-2xl border p-4 shadow-sm ${ui.card}`}
-      >
+      <div className={`rounded-2xl border p-4 shadow-sm ${ui.card}`}>
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -764,9 +765,7 @@ const ui = {
               )}
             </div>
 
-            <div 
-            className={`text-base font-semibold ${ui.title}`}
-            >
+            <div className={`text-base font-semibold ${ui.title}`}>
               {moduleTitle}
             </div>
 
@@ -827,9 +826,7 @@ const ui = {
             )}
 
             {!pdf?.thumbnail_url && hasVideo && (
-              <div 
-              className={`mt-2 text-xs ${ui.weak}`}
-              >
+              <div className={`mt-2 text-xs ${ui.weak}`}>
                 No thumbnail uploaded for this module.
               </div>
             )}
@@ -1000,34 +997,34 @@ function TrainingCard({
   const [activeQuiz, setActiveQuiz] = useState<Assessment | undefined>();
   const { isDarkMode } = useThemeMode();
 
-const ui = {
-  card: isDarkMode
-    ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
-    : "border-slate-200 bg-white text-slate-900",
+  const ui = {
+    card: isDarkMode
+      ? "border-[#253249] bg-[#111C2E] text-[#EAF0F7]"
+      : "border-slate-200 bg-white text-slate-900",
 
-  thumbnailBox: isDarkMode ? "bg-[#162238]" : "bg-slate-100",
+    thumbnailBox: isDarkMode ? "bg-[#162238]" : "bg-slate-100",
 
-  title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
-  text: isDarkMode ? "text-slate-300" : "text-slate-700",
-  muted: isDarkMode ? "text-slate-400" : "text-slate-500",
-  weak: isDarkMode ? "text-slate-500" : "text-slate-400",
+    title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+    text: isDarkMode ? "text-slate-300" : "text-slate-700",
+    muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+    weak: isDarkMode ? "text-slate-500" : "text-slate-400",
 
-  timelineDone: isDarkMode
-    ? "border-green-500 bg-green-950/40 text-green-300"
-    : "border-green-500 bg-green-50 text-green-700",
+    timelineDone: isDarkMode
+      ? "border-green-500 bg-green-950/40 text-green-300"
+      : "border-green-500 bg-green-50 text-green-700",
 
-  timelineActive: isDarkMode
-    ? "border-blue-500 bg-blue-950/40 text-blue-300"
-    : "border-blue-500 bg-blue-50 text-blue-700",
+    timelineActive: isDarkMode
+      ? "border-blue-500 bg-blue-950/40 text-blue-300"
+      : "border-blue-500 bg-blue-50 text-blue-700",
 
-  timelineLocked: isDarkMode
-    ? "border-[#334155] bg-[#162238] text-slate-400"
-    : "border-slate-300 bg-slate-50 text-slate-500",
+    timelineLocked: isDarkMode
+      ? "border-[#334155] bg-[#162238] text-slate-400"
+      : "border-slate-300 bg-slate-50 text-slate-500",
 
-  certificate: isDarkMode
-    ? "border-[#334155] bg-[#162238]"
-    : "border-slate-200 bg-slate-50",
-};
+    certificate: isDarkMode
+      ? "border-[#334155] bg-[#162238]"
+      : "border-slate-200 bg-slate-50",
+  };
   const { data: courses } = useCourses();
   const { data: modules = [] } = useModules(assignment.course_id);
   const { data: progress = [] } = useModuleProgress(assignment.assignment_id);
@@ -1123,9 +1120,7 @@ const ui = {
   };
 
   return (
-    <Card 
-    className={`overflow-hidden rounded-2xl border shadow-sm ${ui.card}`}
-    >
+    <Card className={`overflow-hidden rounded-2xl border shadow-sm ${ui.card}`}>
       <QuizModal
         assessment={activeQuiz}
         userId={userId}
@@ -1135,11 +1130,22 @@ const ui = {
       />
 
       <div className="flex flex-col gap-6">
-        <div className="grid gap-5 md:grid-cols-[240px_1fr]">
-          <div
-           className={`overflow-hidden rounded-2xl ${ui.thumbnailBox}`}
-          
-          >
+        <div>
+          <div className="mb-2 flex items-center justify-between text-sm">
+            {/* <span className={`font-medium ${ui.title}`}>Course progress</span> */}
+
+            <span className={ui.muted}>
+              {completed}/{total} modules completed
+            </span>
+          </div>
+
+          {/* <Progress
+            percent={percent}
+            status={percent === 100 ? "success" : "active"}
+          /> */}
+        </div>
+        {/* <div className="grid gap-5 md:grid-cols-[240px_1fr]">
+          <div className={`overflow-hidden rounded-2xl ${ui.thumbnailBox}`}>
             {course?.thumbnail_url ? (
               <img
                 src={course.thumbnail_url}
@@ -1147,8 +1153,8 @@ const ui = {
                 className="h-48 w-full object-cover md:h-full"
               />
             ) : (
-              <div 
-              className={`flex h-48 items-center justify-center text-sm md:h-full ${ui.weak}`}
+              <div
+                className={`flex h-48 items-center justify-center text-sm md:h-full ${ui.weak}`}
               >
                 No thumbnail
               </div>
@@ -1169,15 +1175,11 @@ const ui = {
                 <Tag color="orange">Due: {formatDate(assignment.due_date)}</Tag>
               </div>
 
-              <h3 
-              className={`text-2xl font-semibold ${ui.title}`}
-              >
+              <h3 className={`text-2xl font-semibold ${ui.title}`}>
                 {course?.course_title ?? `Course ${assignment.course_id}`}
               </h3>
 
-              <p 
-             className={`mt-2 text-sm ${ui.muted}`}
-              >
+              <p className={`mt-2 text-sm ${ui.muted}`}>
                 Continue your assigned learning path and complete modules,
                 quizzes, and certification.
               </p>
@@ -1189,9 +1191,7 @@ const ui = {
                   Course progress
                 </span>
 
-                <span 
-                className={ui.muted}
-                >
+                <span className={ui.muted}>
                   {completed}/{total} modules completed
                 </span>
               </div>
@@ -1202,30 +1202,28 @@ const ui = {
               />
             </div>
           </div>
-        </div>
+        </div> */}
 
-        <AttendanceSummary attendances={attendance} />
+        {/* <AttendanceSummary attendances={attendance} /> */}
 
-        {progress.length === 0 ? (
+        {
+        
+        progress.length === 0 ? (
           <Alert
             type="info"
             showIcon
             message="No accessible modules yet"
             description="Ask your manager to assign this course again after modules are created, or generate module progress for this assignment."
           />
-        ) : (
+        )
+         : (
           <div>
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <div 
-                
-                className={`text-lg font-semibold ${ui.title}`}
-                >
+                <div className={`text-lg font-semibold ${ui.title}`}>
                   Learning path
                 </div>
-                <div 
-                className={`text-sm ${ui.muted}`}
-                >
+                <div className={`text-sm ${ui.muted}`}>
                   Complete modules step by step.
                 </div>
               </div>
@@ -1245,13 +1243,13 @@ const ui = {
                   dot: (
                     <div
                       className={[
-  "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
-  isCompleted
-    ? ui.timelineDone
-    : isInProgress
-      ? ui.timelineActive
-      : ui.timelineLocked,
-].join(" ")}
+                        "flex p-2 h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
+                        isCompleted
+                          ? ui.timelineDone
+                          : isInProgress
+                            ? ui.timelineActive
+                            : ui.timelineLocked,
+                      ].join(" ")}
                     >
                       {index + 1}
                     </div>
@@ -1284,18 +1282,14 @@ const ui = {
           </div>
         )}
 
-        <div 
-        className={`rounded-2xl border border-dashed p-4 ${ui.certificate}`}
+        <div
+          className={`rounded-2xl border border-dashed p-4 ${ui.certificate}`}
         >
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
             <div>
-              <div 
-              className={`font-semibold ${ui.title}`}
-              >Certificate</div>
+              <div className={`font-semibold ${ui.title}`}>Certificate</div>
 
-              <div
-              className={`text-sm ${ui.muted}`}
-              >
+              <div className={`text-sm ${ui.muted}`}>
                 {issuedCert
                   ? `Issued: ${issuedCert.certificate_number}`
                   : !courseCert
@@ -1361,6 +1355,27 @@ export function MyTrainingsPage() {
   const userId = me?.user.user_id;
 
   const { data: mine = [], isLoading } = useTrainingAssignmentsByUser(userId);
+  const { data: courses = [] } = useCourses();
+  const { isDarkMode } = useThemeMode();
+
+  const ui = {
+    page: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+
+    accordion: isDarkMode
+      ? "border-[#253249] bg-slate"
+      : "border-slate-200 bg-white",
+
+    headerCard: isDarkMode
+      ? "bg-[#111C2E] text-[#EAF0F7]"
+      : "bg-white text-slate-900",
+
+    title: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
+    muted: isDarkMode ? "text-slate-400" : "text-slate-500",
+
+    thumbnail: isDarkMode ? "bg-[#162238]" : "bg-slate-100",
+  };
+
+  const getCourse = (courseId: number) => findCourse(courses, courseId);
 
   return (
     <>
@@ -1381,16 +1396,106 @@ export function MyTrainingsPage() {
       ) : mine.length === 0 ? (
         <Empty description="No trainings assigned to you yet" />
       ) : (
-        <div className="grid gap-5">
-          {mine.map((assignment) => (
-            <TrainingCard
-              key={assignment.assignment_id}
-              assignment={assignment}
-              userId={userId}
-            />
-          ))}
-        </div>
+        <Collapse
+          accordion
+          bordered={false}
+          className={`rounded-2xl border p-2 shadow-sm ${ui.accordion}`}
+          // defaultActiveKey={[String(mine[0]?.assignment_id)]}
+          items={mine.map((assignment) => {
+            const course = getCourse(assignment.course_id);
+
+            return {
+              key: String(assignment.assignment_id),
+              label: (
+                <div className="flex w-full flex-col gap-3 py-2">
+                  <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div
+                        className={`h-16 w-24 shrink-0 overflow-hidden rounded-xl ${ui.thumbnail}`}
+                      >
+                        {course?.thumbnail_url ? (
+                          <img
+                            src={course.thumbnail_url}
+                            alt={course?.course_title ?? "Course thumbnail"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className={`flex h-full items-center justify-center text-xs ${ui.muted}`}
+                          >
+                            No image
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div
+                          className={`truncate text-base font-semibold md:text-lg ${ui.title}`}
+                        >
+                          {course?.course_title ??
+                            `Course ${assignment.course_id}`}
+                        </div>
+
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <Tag icon={<ClockCircleOutlined />} color="blue">
+                            {formatDuration(course?.total_duration_minutes)}
+                          </Tag>
+
+                          <Tag color="orange">
+                            Due: {formatDate(assignment.due_date)}
+                          </Tag>
+
+                          {assignment.is_mandatory && (
+                            <Tag color="red">Mandatory</Tag>
+                          )}
+
+                          <StatusTag value={assignment.status} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <CourseProgressBar assignment={assignment} />
+                </div>
+              ),
+              children: (
+                <div className="pt-2">
+                  <TrainingCard assignment={assignment} userId={userId} />
+                </div>
+              ),
+            };
+          })}
+        />
       )}
     </>
+  );
+}
+
+function CourseProgressBar({ assignment }: { assignment: TrainingAssignment }) {
+  const { data: progress = [] } = useModuleProgress(assignment.assignment_id);
+  const { isDarkMode } = useThemeMode();
+
+  const completed = progress.filter((p) => p.status === "completed").length;
+  const total = progress.length || 1;
+  const percent = Math.round((completed / total) * 100);
+
+  return (
+    <div className="md:pl-[112px]">
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className={isDarkMode ? "text-slate-400" : "text-slate-500"}>
+          Course progress
+        </span>
+
+        <span className={isDarkMode ? "text-slate-400" : "text-slate-500"}>
+          {completed}/{total} modules completed
+        </span>
+      </div>
+
+      <Progress
+        percent={percent}
+        size="small"
+        status={percent === 100 ? "success" : "active"}
+      />
+    </div>
   );
 }
