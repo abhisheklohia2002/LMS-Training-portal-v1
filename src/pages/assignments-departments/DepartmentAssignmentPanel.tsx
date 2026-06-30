@@ -160,21 +160,6 @@ export function DepartmentAssignmentPanel() {
         </Form.Item>
       </Form>
 
-      {/* {result && (
-        <Alert
-          type="success"
-          showIcon
-          message="Department assignment completed"
-          description={
-            <div>
-              <div>Total users: {result.total_users}</div>
-              <div>Assigned: {result.assigned_count}</div>
-              <div>Skipped existing: {result.skipped_existing_count}</div>
-            </div>
-          }
-        />
-      )} */}
-
       <Table
         rowKey="assignment_id"
         loading={assignmentsLoading}

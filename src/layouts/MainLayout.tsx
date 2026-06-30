@@ -291,7 +291,7 @@ export function MainLayout() {
                 items: [
                   {
                     key: "profile",
-                    label: me?.user?.full_name || "User",
+                    label: me?.user?.email || "User",
                   },
                   {
                     key: "role",
@@ -319,13 +319,6 @@ export function MainLayout() {
         </Header>
 
         <Content className="overflow-y-auto p-4 md:p-6">
-          <Breadcrumb
-            className="mb-4"
-            items={location.pathname
-              .split("/")
-              .filter(Boolean)
-              .map((x) => ({ title: x }))}
-          />
 
           <Outlet />
         </Content>

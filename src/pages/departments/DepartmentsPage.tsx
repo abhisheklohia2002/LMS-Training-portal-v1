@@ -335,7 +335,7 @@ export function DepartmentsPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <Text type="secondary">departments</Text>
+        {/* <Text type="secondary">departments</Text> */}
 
         <div
           style={{

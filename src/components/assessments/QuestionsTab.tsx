@@ -18,11 +18,12 @@ import {
 } from "antd";
 import {
   DeleteOutlined,
+  DownCircleOutlined,
   PlusOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
 
-import { DataTable } from "../common/DataTable";
+import * as XLSX from "xlsx";
 import {
   useAssessmentQuestions,
   useBulkUploadAssessmentQuestions,
@@ -193,6 +194,71 @@ export function QuestionsTab({ assessment }: Props) {
     });
   };
 
+  const handleDownloadQuestions = () => {
+    try {
+      if (!questions.length) {
+        message.warning("No questions found to download");
+        return;
+      }
+
+      const rows = questions.map((question: any) => {
+        const options = question.options ?? [];
+
+        return {
+          assessment_id: assessment.assessment_id,
+          assessment_title: assessment.assessment_title ?? "",
+          question_id: question.question_id,
+          sequence_no: question.sequence_no,
+          question_text: question.question_text,
+          question_type: question.question_type,
+          marks: question.marks,
+          option_a: options[0]?.option_text ?? "",
+          option_b: options[1]?.option_text ?? "",
+          option_c: options[2]?.option_text ?? "",
+          option_d: options[3]?.option_text ?? "",
+          correct_answer:
+            question.question_type === "text"
+              ? ""
+              : options
+                  .filter((option: any) => option.is_correct)
+                  .map((option: any) => option.option_text)
+                  .join(", "),
+          is_active: question.is_active ? "Yes" : "No",
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+
+      worksheet["!cols"] = [
+        { wch: 15 },
+        { wch: 28 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 45 },
+        { wch: 18 },
+        { wch: 10 },
+        { wch: 25 },
+        { wch: 25 },
+        { wch: 25 },
+        { wch: 25 },
+        { wch: 35 },
+        { wch: 10 },
+      ];
+
+      const workbook = XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Questions");
+
+      XLSX.writeFile(
+        workbook,
+        `assessment-${assessment.assessment_id}-questions.xlsx`,
+      );
+
+      message.success("Questions downloaded successfully");
+    } catch (error) {
+      message.error("Failed to download questions");
+    }
+  };
   return (
     <Card
       size="small"
@@ -244,7 +310,13 @@ export function QuestionsTab({ assessment }: Props) {
               Upload XLS
             </Button>
           </Upload>
-
+          <Button
+            icon={<DownCircleOutlined />}
+            onClick={handleDownloadQuestions}
+            className={ui.actionButton}
+          >
+            Download XLS
+          </Button>
           <Button icon={<PlusOutlined />} type="primary" onClick={openCreate}>
             Add question
           </Button>

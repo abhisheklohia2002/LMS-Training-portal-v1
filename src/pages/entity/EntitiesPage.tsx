@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  Breadcrumb,
   Button,
   Form,
   Input,
@@ -28,6 +29,7 @@ import {
 } from "../../hooks/useEntities";
 import { CreateEntityPayload, Entity } from "../../types";
 import { primaryIconClass } from "../../common";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 const { Title, Text } = Typography;
 
@@ -43,7 +45,10 @@ export function EntitiesPage() {
   const createEntity = useCreateEntity();
   const updateEntity = useUpdateEntity();
   const deleteEntity = useDeleteEntity();
+  const { isDarkMode } = useThemeMode();
 
+   const ui = {
+       breadcrumb: isDarkMode ? "text-slate-400" : "text-slate-500"}
   const [form] = Form.useForm<EntityFormValues>();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -133,7 +138,7 @@ export function EntitiesPage() {
         },
       });
     } catch {
-      // AntD will show validation errors
+      
     }
   };
 
@@ -233,7 +238,22 @@ export function EntitiesPage() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <Text type="secondary">entities</Text>
+        <div className="mb-3">
+        <Breadcrumb
+          className={ui.breadcrumb}
+          items={[
+            {
+              title: "Dashboard",
+            },
+            {
+              title: "Learning",
+            },
+            {
+              title: "Entity",
+            },
+          ]}
+        />
+      </div>
 
         <div
           style={{
