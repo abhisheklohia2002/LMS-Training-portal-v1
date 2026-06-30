@@ -9,6 +9,7 @@ import {
   Table,
   Tag,
   Space,
+  Breadcrumb,
 } from "antd";
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
@@ -20,11 +21,17 @@ import {
   useDepartmentAssignments,
 } from "../../hooks/useDepartmentAssignments";
 import Text from "antd/es/typography/Text";
+import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import { PageHeader } from "../../components/common/PageHeader";
 
 export function DepartmentAssignmentPanel() {
   const [form] = Form.useForm();
+    const { isDarkMode } = useThemeMode();
+  
   const [result, setResult] = useState<any>(null);
-
+   const ui = {
+       breadcrumb: isDarkMode ? "text-slate-400" : "text-slate-500",
+   }
   const { data: departmentsData, isLoading: departmentsLoading } =
     useDepartments();
   const { data: coursesData, isLoading: coursesLoading } = useCourses();
@@ -93,6 +100,26 @@ export function DepartmentAssignmentPanel() {
 
   return (
     <div>
+      <div className="mb-3">
+        <Breadcrumb
+          className={ui.breadcrumb}
+          items={[
+            {
+              title: "Dashboard",
+            },
+            {
+              title: "Learning",
+            },
+            {
+              title: "Department Assignment",
+            },
+          ]}
+        />
+      </div>
+      <PageHeader
+              title="Department Assignment"
+              subtitle="Assign courses to specific departments."
+            />
       <Form
         form={form}
         layout="vertical"
@@ -165,6 +192,15 @@ export function DepartmentAssignmentPanel() {
         loading={assignmentsLoading}
         dataSource={assignments}
         columns={[
+          {
+            title: "Entity",
+            render: (_: unknown, record: any) => (
+              <Space>
+                <Text>{record.department?.entity?.entity_name || "-"}</Text>
+              </Space>
+            ),
+          },
+
           {
             title: "Department",
             render: (_: unknown, record: any) => (
