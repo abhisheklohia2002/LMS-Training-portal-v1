@@ -144,15 +144,17 @@ export function DepartmentAssignmentPanel() {
         }}
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
+          gridTemplateColumns: "1fr 1fr 1fr 1fr",
           gap: 16,
           marginBottom: 24,
+          alignItems: "end",
         }}
       >
         <Form.Item
           label="Entity"
           name="entity_id"
           rules={[{ required: true, message: "Entity is required" }]}
+          style={{ marginBottom: 0 }}
         >
           <Select
             showSearch
@@ -172,6 +174,7 @@ export function DepartmentAssignmentPanel() {
           name="department_id"
           label="Department"
           rules={[{ required: true, message: "Department is required" }]}
+          style={{ marginBottom: 0 }}
         >
           <Select
             showSearch
@@ -192,6 +195,7 @@ export function DepartmentAssignmentPanel() {
           name="course_id"
           label="Course"
           rules={[{ required: true, message: "Course is required" }]}
+          style={{ marginBottom: 0 }}
         >
           <Select
             showSearch
@@ -205,37 +209,25 @@ export function DepartmentAssignmentPanel() {
           />
         </Form.Item>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr auto",
-            gap: 16,
-            alignItems: "end",
-          }}
-        >
-          <Form.Item
-            name="due_date"
-            label="Due date"
-            style={{ marginBottom: 0 }}
-          >
-            <DatePicker style={{ width: "100%" }} />
-          </Form.Item>
+        <Form.Item name="due_date" label="Due date" style={{ marginBottom: 0 }}>
+          <DatePicker style={{ width: "100%" }} />
+        </Form.Item>
 
-          <Form.Item
-            name="is_mandatory"
-            label="Mandatory"
-            valuePropName="checked"
-            style={{ marginBottom: 0 }}
-          >
-            <Switch />
-          </Form.Item>
-        </div>
+        <Form.Item
+          name="is_mandatory"
+          label="Mandatory"
+          valuePropName="checked"
+          style={{ marginBottom: 0 }}
+        >
+          <Switch />
+        </Form.Item>
 
         <Form.Item label=" " style={{ marginBottom: 0 }}>
           <Button
             htmlType="submit"
             type="primary"
             loading={assignCourse.isPending}
+            block
           >
             Assign to Department
           </Button>
