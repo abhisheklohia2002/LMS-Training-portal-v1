@@ -1510,6 +1510,21 @@ export const api = {
         },
       ]);
     },
+    listByEntity: async (entityId: number) => {
+    const res = await requestFirst<any>([
+      {
+        method: "GET",
+        url: `/api/departments/entity/${entityId}`,
+      },
+    ]);
+
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.departments)) return res.departments;
+    if (Array.isArray(res?.data)) return res.data;
+
+    return [];
+  },
+
   },
   departmentTrainingMappings: {
     list: async () => {

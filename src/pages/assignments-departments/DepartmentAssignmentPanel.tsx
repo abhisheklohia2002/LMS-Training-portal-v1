@@ -4,17 +4,15 @@ import {
   Form,
   Select,
   Switch,
-  Alert,
   message,
   Table,
   Tag,
   Space,
   Breadcrumb,
 } from "antd";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import dayjs from "dayjs";
 
-import { useDepartments } from "../../hooks/useDepartments";
 import { useCourses } from "../../hooks/useCourses";
 import {
   useAssignCourseToDepartment,
@@ -23,23 +21,36 @@ import {
 import Text from "antd/es/typography/Text";
 import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 import { PageHeader } from "../../components/common/PageHeader";
+import { useEntities } from "../../hooks/useEntities";
+import { Entity } from "../../types";
+import { useDepartmentsByEntity } from "../../hooks/useDepartmentsByEntity";
+// import { useDepartmentsByEntity } from "../../hooks/useDepartmentsByEntity";
 
 export function DepartmentAssignmentPanel() {
   const [form] = Form.useForm();
-    const { isDarkMode } = useThemeMode();
-  
-  const [result, setResult] = useState<any>(null);
-   const ui = {
-       breadcrumb: isDarkMode ? "text-slate-400" : "text-slate-500",
-   }
+  const { isDarkMode } = useThemeMode();
+
+  const selectedEntityId = Form.useWatch("entity_id", form);
+
+  const { data: entityData, isLoading: isEntitiesLoading } = useEntities();
+
   const { data: departmentsData, isLoading: departmentsLoading } =
-    useDepartments();
+    useDepartmentsByEntity(selectedEntityId);
+
   const { data: coursesData, isLoading: coursesLoading } = useCourses();
 
   const assignCourse = useAssignCourseToDepartment();
 
   const { data: assignmentsData, isLoading: assignmentsLoading } =
     useDepartmentAssignments();
+
+  const ui = {
+    breadcrumb: isDarkMode ? "text-slate-400" : "text-slate-500",
+  };
+
+  useEffect(() => {
+    form.setFieldValue("department_id", undefined);
+  }, [selectedEntityId, form]);
 
   const assignments = useMemo(() => {
     if (Array.isArray(assignmentsData)) return assignmentsData;
@@ -51,6 +62,14 @@ export function DepartmentAssignmentPanel() {
     }
     return [];
   }, [assignmentsData]);
+
+  const entities: Entity[] = useMemo(() => {
+    if (Array.isArray(entityData)) return entityData;
+    if (Array.isArray(entityData?.entities)) return entityData.entities;
+    if (Array.isArray(entityData?.data)) return entityData.data;
+    return [];
+  }, [entityData]);
+
   const departments = useMemo(() => {
     if (Array.isArray(departmentsData)) return departmentsData;
     if (Array.isArray((departmentsData as any)?.departments)) {
@@ -75,8 +94,9 @@ export function DepartmentAssignmentPanel() {
 
   const handleSubmit = (values: any) => {
     const payload = {
-      department_id: values.department_id,
-      course_id: values.course_id,
+      // entity_id: Number(values.entity_id),
+      department_id: Number(values.department_id),
+      course_id: Number(values.course_id),
       assigned_by_user_id: 1,
       is_mandatory: values.is_mandatory ?? true,
       due_date: values.due_date
@@ -85,9 +105,8 @@ export function DepartmentAssignmentPanel() {
     };
 
     assignCourse.mutate(payload, {
-      onSuccess: (res: any) => {
+      onSuccess: () => {
         message.success("Course assigned to department");
-        setResult(res?.result || res?.data || res);
         form.resetFields();
       },
       onError: (error: any) => {
@@ -104,22 +123,18 @@ export function DepartmentAssignmentPanel() {
         <Breadcrumb
           className={ui.breadcrumb}
           items={[
-            {
-              title: "Dashboard",
-            },
-            {
-              title: "Learning",
-            },
-            {
-              title: "Department Assignment",
-            },
+            { title: "Dashboard" },
+            { title: "Learning" },
+            { title: "Department Assignment" },
           ]}
         />
       </div>
+
       <PageHeader
-              title="Department Assignment"
-              subtitle="Assign courses to specific departments."
-            />
+        title="Department Assignment"
+        subtitle="Assign courses to specific departments."
+      />
+
       <Form
         form={form}
         layout="vertical"
@@ -135,13 +150,37 @@ export function DepartmentAssignmentPanel() {
         }}
       >
         <Form.Item
+          label="Entity"
+          name="entity_id"
+          rules={[{ required: true, message: "Entity is required" }]}
+        >
+          <Select
+            showSearch
+            loading={isEntitiesLoading}
+            placeholder="Select entity"
+            optionFilterProp="label"
+            options={entities
+              .filter((entity: Entity) => entity.is_active)
+              .map((entity: Entity) => ({
+                label: entity.entity_name,
+                value: entity.id,
+              }))}
+          />
+        </Form.Item>
+
+        <Form.Item
           name="department_id"
           label="Department"
           rules={[{ required: true, message: "Department is required" }]}
         >
           <Select
-            placeholder="Select department"
+            showSearch
+            disabled={!selectedEntityId}
+            placeholder={
+              selectedEntityId ? "Select department" : "Select entity first"
+            }
             loading={departmentsLoading}
+            optionFilterProp="label"
             options={departments.map((d: any) => ({
               label: d.department_name || d.name,
               value: d.id,
@@ -155,8 +194,10 @@ export function DepartmentAssignmentPanel() {
           rules={[{ required: true, message: "Course is required" }]}
         >
           <Select
+            showSearch
             placeholder="Select course"
             loading={coursesLoading}
+            optionFilterProp="label"
             options={courses.map((c: any) => ({
               label: c.course_title,
               value: c.course_id || c.id,
@@ -164,19 +205,33 @@ export function DepartmentAssignmentPanel() {
           />
         </Form.Item>
 
-        <Form.Item name="due_date" label="Due date">
-          <DatePicker style={{ width: "100%" }} />
-        </Form.Item>
-
-        <Form.Item
-          name="is_mandatory"
-          label="Mandatory"
-          valuePropName="checked"
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: 16,
+            alignItems: "end",
+          }}
         >
-          <Switch />
-        </Form.Item>
+          <Form.Item
+            name="due_date"
+            label="Due date"
+            style={{ marginBottom: 0 }}
+          >
+            <DatePicker style={{ width: "100%" }} />
+          </Form.Item>
 
-        <Form.Item label=" ">
+          <Form.Item
+            name="is_mandatory"
+            label="Mandatory"
+            valuePropName="checked"
+            style={{ marginBottom: 0 }}
+          >
+            <Switch />
+          </Form.Item>
+        </div>
+
+        <Form.Item label=" " style={{ marginBottom: 0 }}>
           <Button
             htmlType="submit"
             type="primary"
@@ -200,7 +255,6 @@ export function DepartmentAssignmentPanel() {
               </Space>
             ),
           },
-
           {
             title: "Department",
             render: (_: unknown, record: any) => (
