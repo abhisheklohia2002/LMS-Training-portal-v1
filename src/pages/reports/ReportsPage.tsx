@@ -3,6 +3,9 @@ import Text from "antd/es/typography/Text";
 import { PageHeader } from "../../components/common/PageHeader";
 import { useReports } from "../../hooks/useReports";
 import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import { TrainingAssignment } from "../../types";
+import { formatDate } from "../../helper/formatDate";
+import * as XLSX from "xlsx";
 
 export function ReportsPage() {
   const { isDarkMode } = useThemeMode();
@@ -30,24 +33,42 @@ export function ReportsPage() {
   const completionPercent = Math.round(
     (completed / (completion.length || 1)) * 100,
   );
-
+  const handleExportCSV = ()=>{
+    const csvContent = completion.map((item: any) =>{
+      return {
+        assignment_id: item.assignment_id,
+        user: item.user?.full_name ?? "-",
+        email: item.user?.email ?? "-",
+        courseName: item.courseName,
+        due_date: formatDate(item.due_date) || "-",
+        completion_date: formatDate(item.completion_date) || "-",
+        status: item.status || "-"
+      }
+    })
+    const worksheet = XLSX.utils.json_to_sheet(csvContent);
+        const workbook = XLSX.utils.book_new();
+    
+        XLSX.utils.book_append_sheet(workbook, worksheet, "CSV");
+    
+        const time = new Date();
+    
+        XLSX.writeFile(workbook, `Completion-Report-${String(time.getTime())}.xlsx`);
+  }
   return (
     <>
       <PageHeader
         title="Reports"
         subtitle="Training, assessment and certificate mock reports."
-        actions={
-          <Button className={ui.actionButton}>
-            Export CSV
-          </Button>
-        }
+        actions={<Button 
+          onClick={handleExportCSV}
+          className={ui.actionButton}>Export CSV</Button>}
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4">
         <Card
           loading={isLoading}
           title="Training completion report"
-          className={ui.card}
+          className={ui.card + "w-full"}
         >
           <Progress
             percent={completionPercent}
@@ -70,56 +91,44 @@ export function ReportsPage() {
               {
                 title: "User",
                 dataIndex: "user_id",
-                render: (value: number) => (
-                  <Text className={ui.text}>{value ?? "-"}</Text>
+                render: (_: number, record: TrainingAssignment) => (
+                  <Text className={ui.text}>
+                    {record.user?.full_name ?? "-"}
+                  </Text>
+                ),
+              },
+              {
+                title: "Email",
+                dataIndex: "user_id",
+                render: (_: number, record: TrainingAssignment) => (
+                  <Text className={ui.text}>{record.user?.email ?? "-"}</Text>
                 ),
               },
               {
                 title: "Course",
-                dataIndex: "course_id",
-                render: (value: number) => (
+                dataIndex: "courseName",
+                render: (value: string) => (
                   <Text className={ui.text}>{value ?? "-"}</Text>
                 ),
               },
+             
               {
+                title: "Due Date",
+                dataIndex: "due_date",
+                render: (value: string) => (
+                  <Text className={ui.text}>{formatDate(value) || "-"}</Text>
+                ),
+              },
+              {
+                title: "Completion Date",
+                dataIndex: "completion_date",
+                render: (value: string) => (
+                  <Text className={ui.text}>{formatDate(value) || "-"}</Text>
+                ),
+              },
+               {
                 title: "Status",
                 dataIndex: "status",
-                render: (value: string) => (
-                  <Text className={ui.text}>{value || "-"}</Text>
-                ),
-              },
-            ]}
-          />
-        </Card>
-
-        <Card
-          loading={isLoading}
-          title="Certificate expiry report"
-          className={ui.card}
-        >
-          <Table
-            size="small"
-            dataSource={data?.certificates ?? []}
-            rowKey="certificate_issue_id"
-            pagination={false}
-            columns={[
-              {
-                title: "Number",
-                dataIndex: "certificate_number",
-                render: (value: string) => (
-                  <Text className={ui.text}>{value || "-"}</Text>
-                ),
-              },
-              {
-                title: "User",
-                dataIndex: "user_id",
-                render: (value: number) => (
-                  <Text className={ui.text}>{value ?? "-"}</Text>
-                ),
-              },
-              {
-                title: "Expiry",
-                dataIndex: "expiry_date",
                 render: (value: string) => (
                   <Text className={ui.text}>{value || "-"}</Text>
                 ),

@@ -229,6 +229,8 @@ const normalizeAssignment = (row: any): TrainingAssignment => ({
   completion_date: row?.completion_date ?? row?.completionDate ?? null,
   status: row?.status ?? "assigned",
   improvement_status: row?.improvement_status ?? row?.improvementStatus ?? "",
+  user:row.user?.id ? normalizeUser(row.user) : undefined,
+  courseName:row?.course?.course_title ?? ""
 });
 
 const normalizeProgress = (row: any): ModuleProgress => ({

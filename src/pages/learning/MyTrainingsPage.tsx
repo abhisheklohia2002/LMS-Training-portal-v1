@@ -66,6 +66,8 @@ import {
 import { useCreateTrainingSession } from "../../hooks/useTrainingSessionsByCourse";
 import { useQueryClient } from "@tanstack/react-query";
 import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import { formatDate } from "../../helper/formatDate";
+import formatExamTime from "../../helper/formatExamTime";
 
 function moduleStatus(progress?: ModuleProgress) {
   if (!progress) return "locked";
@@ -73,40 +75,9 @@ function moduleStatus(progress?: ModuleProgress) {
   if (progress.status === "in_progress") return "In progress";
   return "pending";
 }
-function formatDate(value?: any) {
-  if (!value) return "No due date";
 
-  const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
 
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatExamTime(seconds: number) {
-  const safeSeconds = Math.max(seconds, 0);
-
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const secs = safeSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${String(minutes).padStart(2, "0")}m ${String(
-      secs,
-    ).padStart(2, "0")}s`;
-  }
-
-  return `${String(minutes).padStart(2, "0")}m ${String(secs).padStart(
-    2,
-    "0",
-  )}s`;
-}
 
 function formatDuration(minutes?: number) {
   if (!minutes) return "0 min";

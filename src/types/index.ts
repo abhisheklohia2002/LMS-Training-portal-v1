@@ -25,11 +25,11 @@ export interface User {
   status: UserStatus;
   manager_id?: ID | null;
   role_id: ID;
-   department_id?: number;
+  department_id?: number;
   department?: any;
-  role?:{
-    role_name:string
-  }
+  role?: {
+    role_name: string;
+  };
 }
 
 export interface Course {
@@ -52,8 +52,8 @@ export interface Module {
   sequence_no: number;
   due_days: number;
   is_active: boolean;
-  duration_minutes:number;
-  course:any
+  duration_minutes: number;
+  course: any;
 }
 export interface TrainingMapping {
   mapping_id: ID;
@@ -75,6 +75,8 @@ export interface TrainingAssignment {
   completion_date?: string | null;
   status: AssignmentStatus;
   improvement_status?: string;
+  user?: User;
+  courseName:string;
 }
 export interface ModuleProgress {
   id: ID;
@@ -84,7 +86,7 @@ export interface ModuleProgress {
   status: "pending" | "in_progress" | "completed";
   started_at?: string | null;
   completed_at?: string | null;
-  video_watched_percent:number
+  video_watched_percent: number;
 }
 
 export type Assessment = {
@@ -166,7 +168,6 @@ export type AssessmentRule = {
   evaluation_method?: string;
 };
 
-
 export interface CertificationRule {
   certification_rule_id: ID;
   issue_on_course_completion: boolean;
@@ -214,7 +215,6 @@ export type Department = {
   updated_at?: string;
   entity_id: number;
   entity?: Entity;
-  
 };
 
 export type CreateDepartmentPayload = {
@@ -222,7 +222,6 @@ export type CreateDepartmentPayload = {
   description?: string;
   is_active: boolean;
   entity_id: number;
-
 };
 
 export type UpdateDepartmentPayload = {
@@ -230,8 +229,6 @@ export type UpdateDepartmentPayload = {
   description?: string;
   is_active?: boolean;
 };
-
-
 
 export type Entity = {
   id: number;
@@ -249,7 +246,6 @@ export type CreateEntityPayload = {
   description?: string;
   is_active: boolean;
 };
-
 
 export type Notification = {
   notification_id: number;
