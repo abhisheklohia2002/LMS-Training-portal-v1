@@ -272,12 +272,15 @@ export function MainLayout() {
 
           {/* Right */}
           <div className="flex items-center justify-end gap-5">
-            <Switch
-              checked={isDarkMode}
-              onChange={toggleTheme}
-              checkedChildren={<MoonOutlined />}
-              unCheckedChildren={<SunOutlined />}
-            />
+            {
+             isDarkMode ?<SunOutlined style={{
+              fontSize:"20px"
+             }} onClick={toggleTheme} />:<MoonOutlined
+             style={{
+              fontSize:"20px"
+             }}
+              onClick={toggleTheme} />
+            }
 
             <Badge count={unread}>
               <BellOutlined
