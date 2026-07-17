@@ -33,7 +33,7 @@ export function DashboardPage() {
     muted: isDarkMode ? "text-slate-400" : "text-slate-500",
   };
 
-  const users = useUsers();
+  const users = useUsers(1,100);
   const courses = useCourses();
   const assignments = useTrainingAssignments();
   const certs = useCertificateIssues();
@@ -83,7 +83,7 @@ export function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <MetricCard
           title="Total users"
-          value={users.data?.length ?? 0}
+          value={users.data?.data.length ?? 0}
           icon={<TeamOutlined />}
         />
 

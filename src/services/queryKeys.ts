@@ -1,6 +1,8 @@
 export const queryKeys = {
   roles: ["roles"] as const,
   users: ["users"] as const,
+  allusers: (page: number, pageSize: number) =>
+  ["users", page, pageSize] as const,
   user: (id: string | number) => ["users", String(id)] as const,
   courses: ["courses"] as const,
   course: (id: string | number) => ["courses", String(id)] as const,
