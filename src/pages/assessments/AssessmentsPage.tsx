@@ -360,7 +360,7 @@ export function AssessmentsPage() {
   const { data: attempts } = useAssessmentAttempts();
   const { data: courses } = useCourses();
   const { data: modules } = useModules();
-  const { data: users } = useUsers();
+  const { data: users } = useUsers(1,100);
 
   const { data: assessmentRules = [], isLoading: rulesLoading } =
     useAssessmentRules();
@@ -433,7 +433,7 @@ export function AssessmentsPage() {
                           {
                             title: "User",
                             render: (_, a) =>
-                              findUser(users, a.user_id)?.full_name,
+                              findUser(users?.data, a.user_id)?.full_name,
                           },
                           { title: "Attempt", dataIndex: "attempt_no" },
                           { title: "Score", dataIndex: "score_obtained" },

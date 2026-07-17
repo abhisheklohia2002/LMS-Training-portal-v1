@@ -41,7 +41,7 @@ function AssignmentTimeline({ id }: { id: number }) {
 
 export function TrainingAssignmentsPage() {
   const { data, isLoading } = useTrainingAssignments();
-  const { data: users } = useUsers();
+  const { data: users } = useUsers(1,100);
   const { data: courses } = useCourses();
   const reactivate = useReactivateTrainingAssignment();
   const updateStatus = useUpdateTrainingAssignmentStatus();
@@ -59,7 +59,7 @@ export function TrainingAssignmentsPage() {
   const employeeRoleId = 3;
 
   const employeeUsers =
-    users?.filter((u) => u.role_id === employeeRoleId) ?? [];
+    users?.data?.filter((u) => u.role_id === employeeRoleId) ?? [];
 
   const learnerOptions = employeeUsers.map((u) => ({
     label: `${u.full_name || "Unknown User"} (${u.email})`,
@@ -67,7 +67,7 @@ export function TrainingAssignmentsPage() {
   }));
 
   const userOptions =
-    users?.map((u) => ({
+    users?.data?.map((u) => ({
       label: `${u.full_name || "Unknown User"} (${u.email})`,
       value: u.user_id,
     })) ?? [];
@@ -100,7 +100,7 @@ export function TrainingAssignmentsPage() {
           {
             title: "Learner",
             render: (_, r) =>
-              findUser(users, r.user_id)?.full_name || r.user_id,
+              findUser(users?.data, r.user_id)?.full_name || r.user_id,
           },
           {
             title: "Course",

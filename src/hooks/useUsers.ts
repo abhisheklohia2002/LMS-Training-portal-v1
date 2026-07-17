@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { queryKeys } from "../services/queryKeys";
-import type { User } from "../types";
+import type { PaginatedResponse, User } from "../types";
 export const useUsers = (page: number, pageSize: number) =>
-  useQuery({
+  useQuery<PaginatedResponse<User[]>>({
     queryKey: queryKeys.allusers(page, pageSize),
     queryFn: ()=> api.users.list(page, pageSize),
     staleTime: 60_000,
