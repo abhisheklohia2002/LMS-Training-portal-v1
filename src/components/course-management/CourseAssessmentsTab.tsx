@@ -64,7 +64,7 @@ export function CourseAssessmentsTab({ courseId }: Props) {
   const { data: assessments = [], isLoading } = useAssessments();
   const { data: modules = [] } = useModules(courseId);
   const { data: attempts = [] } = useAssessmentAttempts();
-  const { data: users = [] } = useUsers();
+  const users = useUsers(1,100);
 
   const { data: assessmentRules = [], isLoading: rulesLoading } =
     useAssessmentRules();
@@ -191,7 +191,7 @@ export function CourseAssessmentsTab({ courseId }: Props) {
                               title: "User",
                               render: (_: unknown, attempt: any) => (
                                 <Text className={ui.text}>
-                                  {findUser(users, attempt.user_id)
+                                  {findUser([], attempt.user_id)
                                     ?.full_name ?? attempt.user_id}
                                 </Text>
                               ),

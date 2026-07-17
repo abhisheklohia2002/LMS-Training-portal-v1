@@ -39,16 +39,14 @@ export function CourseAssignmentsTab({ courseId }: Props) {
     }
 
   const { data: assignments = [], isLoading } = useTrainingAssignments();
-  const { data: users = [] } = useUsers();
+  const { data: users } = useUsers(1,100);
   const createAssignment = useCreateTrainingAssignment();
-
   const [open, setOpen] = useState(false);
-
   const courseAssignments = assignments.filter(
     (assignment: any) => assignment.course_id === courseId,
   );
-
-  const learnerOptions = users.map((user: any) => ({
+  
+  const learnerOptions = (users?.data ?? []).map((user: any) => ({
     label: `${user.full_name || "Unknown User"} (${user.email})`,
     value: user.user_id,
   }));
@@ -70,7 +68,7 @@ export function CourseAssignmentsTab({ courseId }: Props) {
             title: "Learner",
             render: (_, record: any) =>
               <Text className={ui.text}>
-               { findUser(users, record.user_id)?.full_name ?? record.user_id}
+               { findUser(users?.data as any, record.user_id)?.full_name ?? record.user_id}
               </Text>
           },
           {
