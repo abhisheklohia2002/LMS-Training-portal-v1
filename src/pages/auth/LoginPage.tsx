@@ -6,7 +6,7 @@ import { getApiErrorMessage } from "../../services/api";
 import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
 
 const roleCredentials: Record<string, { email: string; password: string }> = {
-  employee: { email: "david@test.com", password: "12345678" },
+  employee: { email: "", password: "" },
 };
 
 export function LoginPage() {
