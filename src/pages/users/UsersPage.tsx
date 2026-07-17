@@ -82,7 +82,8 @@ type userResponseXls = {
 
 export function UsersPage() {
   const { isDarkMode } = useThemeMode();
-
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const ui = {
     text: isDarkMode ? "text-[#EAF0F7]" : "text-slate-900",
     muted: isDarkMode ? "text-slate-400" : "text-slate-500",
@@ -96,7 +97,8 @@ export function UsersPage() {
       : "rounded-2xl border border-slate-200 bg-white p-3",
   };
 
-  const { data, isLoading } = useUsers();
+  const { data, isLoading } = useUsers(page, pageSize);
+
   const { data: roles } = useRoles();
   const { data: departmentsData, isLoading: departmentsLoading } =
     useDepartments();
@@ -337,6 +339,23 @@ export function UsersPage() {
       <Table
         loading={isLoading}
         dataSource={filteredUsers}
+        pagination={{
+          current: page,
+          pageSize,
+          total: data?.pagination?.total ?? 0,
+          showSizeChanger: true,
+        }}
+        onChange={(pagination) => {
+          const newPage = pagination.current ?? 1;
+          const newPageSize = pagination.pageSize ?? 10;
+
+          if (newPageSize !== pageSize) {
+            setPage(1);
+            setPageSize(newPageSize);
+          } else {
+            setPage(newPage);
+          }
+        }}
         columns={[
           {
             title: "Name",
@@ -456,10 +475,10 @@ export function UsersPage() {
                     size="small"
                     className={ui.modalTable}
                     rowKey={(_, index) => String(index)}
+                    dataSource={bulkResult.errors}
                     pagination={{
                       pageSize: 5,
                     }}
-                    dataSource={bulkResult.errors}
                     columns={[
                       {
                         title: "Row",

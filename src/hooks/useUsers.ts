@@ -2,16 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { queryKeys } from "../services/queryKeys";
 import type { User } from "../types";
-export const useUsers = () =>
+export const useUsers = (page: number, pageSize: number) =>
   useQuery({
-    queryKey: queryKeys.users,
-    queryFn: api.users.list,
+    queryKey: queryKeys.allusers(page, pageSize),
+    queryFn: ()=> api.users.list(page, pageSize),
     staleTime: 60_000,
     gcTime: 10 * 60_000,
   });
-export const useUser = (id?: string | number) =>
+export const useUser = (id?: string | number,) =>
   useQuery({
-    queryKey: queryKeys.user(id || ""),
+    queryKey: queryKeys.user(id || "",),
     queryFn: () => api.users.get(Number(id)),
     enabled: !!id,
   });

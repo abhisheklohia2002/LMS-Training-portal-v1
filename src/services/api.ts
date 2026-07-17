@@ -24,6 +24,7 @@ import type {
   UpdateDepartmentPayload,
   CreateEntityPayload,
   UpdateEntityPayload,
+  PaginatedResponse,
 } from "../types";
 
 const API_BASE_URL =
@@ -105,8 +106,19 @@ type ApiEnvelope<T> =
 
 const unwrap = <T>(response: { data: ApiEnvelope<T> }): T => {
   const body = response.data as any;
-  if (body && typeof body === "object" && "data" in body) return body.data as T;
-  if (body && typeof body === "object" && "user" in body) return body.user as T;
+
+  if (body?.pagination) {
+    return body as T;
+  }
+
+  if ("data" in body) {
+    return body.data as T;
+  }
+
+  if ("user" in body) {
+    return body.user as T;
+  }
+
   return body as T;
 };
 
@@ -201,7 +213,7 @@ const normalizeModule = (mod: any): Module => ({
   due_days: Number(mod?.due_days ?? mod?.dueDays ?? 0),
   is_active: Boolean(mod?.is_active ?? mod?.isActive ?? true),
   duration_minutes: Number(mod.duration_minutes) ?? 0,
-  course:mod.course
+  course: mod.course,
 });
 
 const normalizeMapping = (row: any): TrainingMapping => ({
@@ -229,8 +241,8 @@ const normalizeAssignment = (row: any): TrainingAssignment => ({
   completion_date: row?.completion_date ?? row?.completionDate ?? null,
   status: row?.status ?? "assigned",
   improvement_status: row?.improvement_status ?? row?.improvementStatus ?? "",
-  user:row.user?.id ? normalizeUser(row.user) : undefined,
-  courseName:row?.course?.course_title ?? ""
+  user: row.user?.id ? normalizeUser(row.user) : undefined,
+  courseName: row?.course?.course_title ?? "",
 });
 
 const normalizeProgress = (row: any): ModuleProgress => ({
@@ -241,7 +253,7 @@ const normalizeProgress = (row: any): ModuleProgress => ({
   status: row?.status ?? "pending",
   started_at: row?.started_at ?? row?.startedAt ?? null,
   completed_at: row?.completed_at ?? row?.completedAt ?? null,
-  video_watched_percent:row?.video_watched_percent
+  video_watched_percent: row?.video_watched_percent,
 });
 
 const normalizeAssessment = (row: any): Assessment => {
@@ -491,13 +503,19 @@ export const api = {
   },
 
   users: {
-    list: async () =>
-      listify<any>(
-        await requestFirst<any[]>([
-          { method: "GET", url: "/api/auth/users" },
-          { method: "GET", url: "/api/users" },
-        ]),
-      ).map(normalizeUser),
+    list: async (page: number, pageSize: number) => {
+      const res = await requestFirst<PaginatedResponse<any[]>>([
+        {
+          method: "GET",
+          url: "/api/auth/users",
+          params: { page, pageSize },
+        },
+      ]);
+      return {
+        data: res.data.map(normalizeUser),
+        pagination: res.pagination,
+      };
+    },
     get: async (id: number) =>
       normalizeUser(
         await requestFirst<any>([
@@ -726,21 +744,21 @@ export const api = {
     ]);
   },
 
- updateModuleVideoProgress: async (
-  progressId: number,
-  payload: {
-    watched_seconds: number;
-    duration_seconds: number;
-  },
-) => {
-  return await requestFirst<any>([
-    {
-      method: "PATCH",
-      url: `/api/module-progress/${progressId}/video-progress`,
-      data: payload,
+  updateModuleVideoProgress: async (
+    progressId: number,
+    payload: {
+      watched_seconds: number;
+      duration_seconds: number;
     },
-  ]);
-},
+  ) => {
+    return await requestFirst<any>([
+      {
+        method: "PATCH",
+        url: `/api/module-progress/${progressId}/video-progress`,
+        data: payload,
+      },
+    ]);
+  },
   getModuleDocuments: async (moduleId: number) => {
     return await requestFirst<any>([
       {
@@ -1513,20 +1531,19 @@ export const api = {
       ]);
     },
     listByEntity: async (entityId: number) => {
-    const res = await requestFirst<any>([
-      {
-        method: "GET",
-        url: `/api/departments/entity/${entityId}`,
-      },
-    ]);
+      const res = await requestFirst<any>([
+        {
+          method: "GET",
+          url: `/api/departments/entity/${entityId}`,
+        },
+      ]);
 
-    if (Array.isArray(res)) return res;
-    if (Array.isArray(res?.departments)) return res.departments;
-    if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.departments)) return res.departments;
+      if (Array.isArray(res?.data)) return res.data;
 
-    return [];
-  },
-
+      return [];
+    },
   },
   departmentTrainingMappings: {
     list: async () => {
