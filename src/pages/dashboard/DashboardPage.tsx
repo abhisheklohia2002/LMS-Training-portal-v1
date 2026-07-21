@@ -13,9 +13,8 @@ import { MetricCard } from "../../components/common/MetricCard";
 import { useUsers } from "../../hooks/useUsers";
 import { useCourses } from "../../hooks/useCourses";
 import { useTrainingAssignments } from "../../hooks/useTrainingAssignments";
-import { useCertificateIssues } from "../../hooks/useCertificateIssues";
-import { useAssessmentAttempts } from "../../hooks/useAssessmentAttempts";
 import { useThemeMode } from "../../context/ThemeProvider/ThemeProvider";
+import { useMe } from "../../hooks/useAuth";
 
 export function DashboardPage() {
   const { isDarkMode } = useThemeMode();
@@ -33,13 +32,14 @@ export function DashboardPage() {
     muted: isDarkMode ? "text-slate-400" : "text-slate-500",
   };
 
-  const users = useUsers(1,100);
+  const users = useUsers(1, 100);
   const courses = useCourses();
   const assignments = useTrainingAssignments();
-  const certs = useCertificateIssues();
-  const attempts = useAssessmentAttempts();
+  const { data: me } = useMe();
+  // const certs = useCertificateIssues();
+  // const attempts = useAssessmentAttempts();
 
-  const isLoading = [users, courses, assignments, certs, attempts].some(
+  const isLoading = [users, courses, assignments].some(
     (query) => query.isLoading,
   );
 
@@ -61,13 +61,13 @@ export function DashboardPage() {
     assignments.data?.filter((assignment) => assignment.status !== "completed")
       .length ?? 0;
 
-  const passedAttempts =
-    attempts.data?.filter((attempt) => attempt.result_status === "passed")
-      .length ?? 0;
+  // const passedAttempts =
+  //   []?.filter((attempt) => attempt.result_status === "passed")
+  //     .length ?? 0;
 
-  const passRate = attempts.data?.length
-    ? Math.round((passedAttempts / attempts.data.length) * 100)
-    : 0;
+  // const passRate = attempts.data?.length
+  //   ? Math.round((passedAttempts / attempts.data.length) * 100)
+  //   : 0;
 
   const completionPercent = Math.round(
     (completedAssignments / (totalAssignments || 1)) * 100,
@@ -101,13 +101,13 @@ export function DashboardPage() {
 
         <MetricCard
           title="Certificates"
-          value={certs.data?.length ?? 0}
+          value={[]?.length ?? 0}
           icon={<SafetyCertificateOutlined />}
         />
 
         <MetricCard
           title="Pass rate"
-          value={passRate}
+          value={0}
           suffix="%"
           icon={<CheckCircleOutlined />}
         />
@@ -132,15 +132,15 @@ export function DashboardPage() {
             </div>
 
             <div>
-              <div className="mb-2 flex items-center justify-between">
+              {/* <div className="mb-2 flex items-center justify-between">
                 <Text className={ui.text}>Assessment pass rate</Text>
-                <Text className={ui.muted}>{passRate}%</Text>
-              </div>
+                <Text className={ui.muted}>{0}%</Text>
+              </div> */}
 
-              <Progress
-                percent={passRate}
-                status={passRate === 100 ? "success" : "active"}
-              />
+              {/* <Progress
+                percent={0}
+                status={100 === 100 ? "success" : "active"}
+              /> */}
             </div>
           </div>
         </Card>
@@ -150,7 +150,12 @@ export function DashboardPage() {
             items={[
               {
                 color: "blue",
-                children: <Text className={ui.text}>Course assigned to David</Text>,
+                children: (
+                  <Text className={ui.text}>
+                    Course assigned to{" "}
+                    {me?.user?.email?.replace(/@.*/, "") + ""}
+                  </Text>
+                ),
               },
               {
                 color: "green",
