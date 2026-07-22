@@ -1331,7 +1331,6 @@ function TrainingCard({
                   href={api.certificateIssues.downloadUrl(
                     issuedCert.certificate_issue_id,
                   )}
-                  target="_blank"
                 >
                   Download certificate
                 </Button>
